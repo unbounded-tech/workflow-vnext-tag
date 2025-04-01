@@ -51,20 +51,25 @@ jobs:
         CURRENT=${CURRENT#v}
         echo "version=$CURRENT" >> $GITHUB_OUTPUT
 
+    - name: Show version calculation info (for humans)
+      uses: harmony-labs/action-vnext@v0.4.0
+      env:
+        LOG_LEVEL: debug
+
     - name: Compute next version using action-vnext
       id: next
       uses: harmony-labs/action-vnext@v0.4.0
 
-    - name: Print Version Information
+    - name: Gate
       id: gate
       run: |
         echo "Current version: ${{ steps.current.outputs.version }}"
         echo "Next version: ${{ steps.next.outputs.version }}"
-        echo "Should release?: ${{ steps.current.outputs.version != steps.next.outputs.version }}"
+        echo "Continue?: ${{ steps.current.outputs.version != steps.next.outputs.version }}"
         echo "continue=${{ steps.current.outputs.version != steps.next.outputs.version }}" >> $GITHUB_OUTPUT
       
     - name: Node package version bump
-      if: inputs.node && steps.gate.outputs.continue
+      if: inputs.node && steps.gate.outputs.continue == 'true'
       run: npm version ${{ steps.next.outputs.version }} --git-tag-version false
 
     # parse yqPatches yaml input - the key "patches" is required and is an array of objects
@@ -84,7 +89,7 @@ jobs:
     #       selector: .spec.package
     #       valuePrefix: v
     - name: Apply YQ Patches (Optional)
-      if: inputs.yqPatches && steps.gate.outputs.continue
+      if: inputs.yqPatches && steps.gate.outputs.continue == 'true'
       run: |
         echo "Applying yq patches..."
 
@@ -123,7 +128,7 @@ jobs:
     #       regex: /ghcr.io/org-name/package-name:(.*)/g
     #       valuePrefix: ghcr.io/org-name/package-name:v
     - name: Apply Regex Patches (Optional)
-      if: inputs.regexPatches && steps.gate.outputs.continue
+      if: inputs.regexPatches && steps.gate.outputs.continue == 'true'
       run: |
         echo "Applying regex patches..."
 
@@ -154,15 +159,15 @@ jobs:
         rm .tmp/regex-patches.yaml
 
     - name: install set-cargo-version (Optional)
-      if: inputs.rust && steps.gate.outputs.continue
+      if: inputs.rust && steps.gate.outputs.continue == 'true'
       run: cargo install set-cargo-version
     
     - name: set cargo version (Optional)
-      if: inputs.rust && steps.gate.outputs.continue
+      if: inputs.rust && steps.gate.outputs.continue == 'true'
       run: set-cargo-version Cargo.toml $(echo "${{ steps.next.outputs.version }}" | sed 's/^v//')
 
     - name: Commit and push changes if they exist
-      if: steps.gate.outputs.continue
+      if: steps.gate.outputs.continue == 'true'
       run: |
         if [ -z "$(git status --porcelain)" ]; then
           echo "No changes to commit"
