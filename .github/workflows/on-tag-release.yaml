@@ -1,4 +1,4 @@
-name: Build and Publish Rust Binary
+name: On Tag Push, Create Release
 on:
   push:
     tags:
