@@ -39,7 +39,7 @@ jobs:
     steps:
 
     - name: Checkout
-      if: !inputs.useDeployKey
+      if: ${{ !inputs.useDeployKey }}
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
