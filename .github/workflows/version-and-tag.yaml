@@ -58,7 +58,12 @@ jobs:
     - name: Get current version tag
       id: current
       run: |
-        CURRENT=$(git describe --tags --abbrev=0 --match "v*" 2>/dev/null || echo "v0.0.0")
+        if git rev-parse --git-dir > /dev/null 2>&1; then
+          CURRENT=$(git tag --list 'v*' --sort=-version:refname | head -n1)
+          CURRENT=${CURRENT:-v0.0.0}  # Defaults if CURRENT is empty
+        else
+          CURRENT="v0.0.0"
+        fi
         CURRENT=${CURRENT#v}
         echo "version=$CURRENT" >> $GITHUB_OUTPUT
 
