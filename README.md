@@ -69,7 +69,6 @@ jobs:
           - filePath: helm/values.yaml
             selector: .image.tag
             valuePrefix: "v"
-        patches:
           - filePath: other/example.yaml
             selector: .image.tag
             valuePrefix: ""
@@ -98,7 +97,6 @@ jobs:
           - filePath: package/composition.yaml
             regex: /ghcr.io/org-name/package-name:(.*)/g
             valuePrefix: ghcr.io/org-name/package-name:v
-        patches:
           - filePath: package/example.yaml
             regex: /ghcr.io/org-name/package-name:(.*)/g
             valuePrefix: ""
