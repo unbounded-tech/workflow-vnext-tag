@@ -1,0 +1,9 @@
+{
+  "ref": "refs/heads/main",
+  "repository": {
+    "name": "your-repo-name"
+  },
+  "inputs": {
+    "rust": "true"
+  }
+}

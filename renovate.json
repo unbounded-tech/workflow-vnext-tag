@@ -1,0 +1,9 @@
+{
+  "extends": ["config:best-practices"],
+  "hostRules": [
+    {
+      "matchHost": "https://github.com/harmony-labs",
+      "hostType": "git-tags"
+    }
+  ]
+}

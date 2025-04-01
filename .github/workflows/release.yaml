@@ -1,0 +1,15 @@
+name: release
+on:
+  push:
+    branches:
+    - main
+
+permissions:
+  packages: write
+  contents: write
+
+jobs:
+
+  release:
+    uses: harmony-labs/workflow-release/.github/workflows/version-and-tag.yaml@main
+    secrets: inherit

@@ -1,0 +1,176 @@
+name: github-release
+on:
+  workflow_call:
+    inputs: 
+      node:
+        type: boolean
+        required: false
+      regexPatches:
+        type: string
+        required: false
+      rust:
+        type: boolean
+        required: false
+        default: false
+      yqPatches:
+        type: string
+        required: false
+    # secrets:
+      # this workflow creates a tag, which can trigger other workflows
+      # so we need to use a personal access token - GITHUB_TOKEN does not allow this
+      # https://docs.github.com/en/actions/security-guides/virtual-environments-for-github-hosted-runners/using-the-github_token-in-a-workflow#permissions-for-the-github_token
+      # GH_PAT_TOKEN:
+      #   required: true
+    
+jobs:
+
+  release:
+    name: Github Release
+    runs-on: ubuntu-latest
+            
+    permissions:
+      packages: write
+      contents: write
+
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        # token: ${{ secrets.GH_PAT_TOKEN }}
+
+    - name: fetch tags
+      run: |
+        git fetch --tags
+
+    - name: Get current version tag
+      id: current
+      run: |
+        CURRENT=$(git describe --tags --abbrev=0 --match "v*" 2>/dev/null || echo "v0.0.0")
+        CURRENT=${CURRENT#v}
+        echo "version=$CURRENT" >> $GITHUB_OUTPUT
+
+    - name: Compute next version using action-vnext
+      id: next
+      uses: harmony-labs/action-vnext@v0.4.0
+
+    - name: Print Version Information
+      id: gate
+      run: |
+        echo "Current version: ${{ steps.current.outputs.version }}"
+        echo "Next version: ${{ steps.next.outputs.version }}"
+        echo "Should release?: ${{ steps.current.outputs.version != steps.next.outputs.version }}"
+        echo "continue=${{ steps.current.outputs.version != steps.next.outputs.version }}" >> $GITHUB_OUTPUT
+      
+    - name: Node package version bump
+      if: inputs.node && steps.gate.outputs.continue
+      run: npm version ${{ steps.next.outputs.version }} --git-tag-version false
+
+    # parse yqPatches yaml input - the key "patches" is required and is an array of objects
+    # these objects contain the keys filePath, selector, and value
+    # for each object, run yq to update the file at filePath with the value at selector to the value
+    # example:
+    # yqPatches: |
+    #   patches:
+    #     - filePath: .gitops/deploy/helm/values.yaml
+    #       selector: .image.tag
+    #     - filePath: .gitops/deploy/helm/Chart.yaml
+    #       selector: .version
+    #     - filePath: config.yaml
+    #       selector: .spec.package
+    #       valuePrefix: ghcr.io/org/package:
+    #     - filePath: config.yaml
+    #       selector: .spec.package
+    #       valuePrefix: v
+    - name: Apply YQ Patches (Optional)
+      if: inputs.yqPatches && steps.gate.outputs.continue
+      run: |
+        echo "Applying yq patches..."
+
+        mkdir -p .tmp
+        touch .tmp/yq-patches.yaml
+        echo "${{ inputs.yqPatches }}" >> .tmp/yq-patches.yaml
+
+        echo "TEMP FILE:"
+        cat .tmp/yq-patches.yaml
+
+        while IFS=$'\t' read -r filePath selector valuePrefix _; do
+
+          echo "\nfilePath:  $filePath"
+          echo "selector: $selector"
+          echo "valuePrefix:  $valuePrefix"
+
+          value=$(echo "${valuePrefix}${{ steps.next.outputs.version }}")
+
+          # remove wrapping quotes from around $selector
+          selector=$(echo $selector | sed 's/^"\(.*\)"$/\1/')
+
+          echo "Running: yq -i '${selector} = \"${value}\"' ${filePath}\n\n"
+          yq -i "${selector} = \"${value}\"" ${filePath}
+
+        done < <(yq e '.patches[] | [.filePath, .selector, .valuePrefix] | @tsv' .tmp/yq-patches.yaml | sed 's/""/"/g' )
+
+        rm .tmp/yq-patches.yaml
+
+    # parse regexPatches yaml input - the key "patches" is required and is an array of objects
+    # these objects contain the keys filePath, selector, and value
+    # for each object, run yq to update the file at filePath with the value at selector to the value
+    # example:
+    # regexPatches: |
+    #   patches:
+    #     - filePath: package/composition.yaml
+    #       regex: /ghcr.io/org-name/package-name:(.*)/g
+    #       valuePrefix: ghcr.io/org-name/package-name:v
+    - name: Apply Regex Patches (Optional)
+      if: inputs.regexPatches && steps.gate.outputs.continue
+      run: |
+        echo "Applying regex patches..."
+
+        mkdir -p .tmp
+        touch .tmp/regex-patches.yaml
+        echo "${{ inputs.regexPatches }}" > .tmp/regex-patches.yaml
+
+        echo "TEMP FILE:"
+        cat .tmp/regex-patches.yaml
+
+        while IFS=$'\t' read -r filePath regex valuePrefix _; do
+
+          value=$(echo "${valuePrefix}${{ steps.next.outputs.version }}")
+
+          # remove wrapping quotes from around $regex
+          regex=$(echo $regex | sed 's#^"\(.*\)"$#\1#')
+
+          echo "\nfilePath:  $filePath"
+          echo "regex: $regex"
+          echo "valuePrefix:  $valuePrefix"
+          echo "value: $value"
+
+          cat ${filePath} | sed -E "s#${regex}#${value}#g" > .tmp/patched-file.yaml
+          mv .tmp/patched-file.yaml ${filePath}
+
+        done < <(yq e '.patches[] | [.filePath, .regex, .valuePrefix] | @tsv' .tmp/regex-patches.yaml | sed 's#""#"#g' )
+
+        rm .tmp/regex-patches.yaml
+
+    - name: install set-cargo-version (Optional)
+      if: inputs.rust && steps.gate.outputs.continue
+      run: cargo install set-cargo-version
+    
+    - name: set cargo version (Optional)
+      if: inputs.rust && steps.gate.outputs.continue
+      run: set-cargo-version Cargo.toml $(echo "${{ steps.next.outputs.version }}" | sed 's/^v//')
+
+    - name: Commit and push changes if they exist
+      if: steps.gate.outputs.continue
+      run: |
+        if [ -z "$(git status --porcelain)" ]; then
+          echo "No changes to commit"
+          exit 0
+        fi
+        echo "Committing changes..."
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+        git commit -am "chore: set version to v${{ steps.next.outputs.version }}"
+        git tag v${{ steps.next.outputs.version }}
+        git push --tags
