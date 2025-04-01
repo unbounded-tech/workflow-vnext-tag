@@ -16,3 +16,5 @@ jobs:
     name: Version and Tag
     uses: harmony-labs/workflow-release/.github/workflows/version-and-tag.yaml@main
     secrets: inherit
+    with:
+      useDeployKey: true
