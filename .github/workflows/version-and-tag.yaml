@@ -40,13 +40,13 @@ jobs:
 
     - name: Checkout
       if: ${{ !inputs.useDeployKey }}
-      uses: actions/checkout@v4
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       with:
         fetch-depth: 0
 
     - name: Checkout
       if: inputs.useDeployKey
-      uses: actions/checkout@v4
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       with:
         fetch-depth: 0
         token: ${{ secrets.DEPLOY_KEY }}
@@ -63,13 +63,13 @@ jobs:
         echo "version=$CURRENT" >> $GITHUB_OUTPUT
 
     - name: Show version calculation info (for humans)
-      uses: harmony-labs/action-vnext@v0.5.0
+      uses: harmony-labs/action-vnext@033f63c2425b27129d93e809d16c508154095c8a # v0.5.0
       env:
         LOG_LEVEL: debug
 
     - name: Compute next version using action-vnext
       id: next
-      uses: harmony-labs/action-vnext@v0.5.0
+      uses: harmony-labs/action-vnext@033f63c2425b27129d93e809d16c508154095c8a # v0.5.0
 
     - name: Gate
       id: gate
