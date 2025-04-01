@@ -21,7 +21,7 @@ on:
         default: false
     secrets:
       # this workflow creates a tag, which can trigger other workflows
-      # so we need to use a personal access token - GITHUB_TOKEN does not allow this
+      # so we need to use a deploy key - GITHUB_TOKEN, the default for checkout, does not allow cascade of workflows to prevent people from doing it by accident
       # https://docs.github.com/en/actions/security-guides/virtual-environments-for-github-hosted-runners/using-the-github_token-in-a-workflow#permissions-for-the-github_token
       DEPLOY_KEY:
         required: false
