@@ -15,12 +15,16 @@ on:
       yqPatches:
         type: string
         required: false
-    # secrets:
+      useDeployKey:
+        type: boolean
+        required: false
+        default: false
+    secrets:
       # this workflow creates a tag, which can trigger other workflows
       # so we need to use a personal access token - GITHUB_TOKEN does not allow this
       # https://docs.github.com/en/actions/security-guides/virtual-environments-for-github-hosted-runners/using-the-github_token-in-a-workflow#permissions-for-the-github_token
-      # GH_PAT_TOKEN:
-      #   required: true
+      DEPLOY_KEY:
+        required: false
     
 jobs:
 
@@ -35,10 +39,17 @@ jobs:
     steps:
 
     - name: Checkout
-      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      if: !inputs.useDeployKey
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
-        # token: ${{ secrets.GH_PAT_TOKEN }}
+
+    - name: Checkout
+      if: inputs.useDeployKey
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.DEPLOY_KEY }}
 
     - name: fetch tags
       run: |
