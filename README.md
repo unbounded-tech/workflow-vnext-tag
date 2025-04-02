@@ -21,6 +21,7 @@ jobs:
     secrets: inherit
     with:
       rust: true
+      useDeployKey: true
 ```
 
 ### Node
