@@ -1,6 +1,7 @@
 # workflow-release
 
-Expects a Personal Access Token to be set as an actions secret named `GH_PAT_TOKEN` which has permissions for:
+Expects a Deploy Token to be set up for the repo in order to trigger additional release pipelines.
+
 * repo
 * write:packages
 
