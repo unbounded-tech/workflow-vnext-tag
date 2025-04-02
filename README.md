@@ -2,11 +2,6 @@
 
 Expects a Deploy Token to be set up for the repo in order to trigger additional release pipelines.
 
-* repo
-* write:packages
-
-You can generate this token here: https://github.com/settings/tokens/new?scopes=repo,write:packages
-
 ## Examples
 
 ### Rust
