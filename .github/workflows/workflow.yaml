@@ -29,7 +29,7 @@ on:
 jobs:
 
   release:
-    name: Github Release
+    name: VNext Tag
     runs-on: ubuntu-latest
             
     permissions:
