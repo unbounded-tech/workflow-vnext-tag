@@ -11,20 +11,25 @@ on:
       node:
         type: boolean
         required: false
+
       regexPatches:
         type: string
         required: false
+
       rust:
         type: boolean
         required: false
         default: false
+
       yqPatches:
         type: string
         required: false
+
       useDeployKey:
         type: boolean
         required: false
         default: false
+
     secrets:
       # this workflow creates a tag, which can trigger other workflows
       # so we need to use a deploy key - GITHUB_TOKEN, the default for checkout, does not allow cascade of workflows to prevent people from doing it by accident
@@ -102,6 +107,7 @@ jobs:
       run: |
         echo "Saving changelog to CHANGELOG.md"
         echo "${{ steps.changelog.outputs.changelog }}" > CHANGELOG.md
+        cat CHANGELOG.md
 
     - name: Node package version bump
       if: inputs.node && steps.gate.outputs.continue == 'true'
