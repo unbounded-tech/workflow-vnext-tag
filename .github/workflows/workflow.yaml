@@ -93,7 +93,7 @@ jobs:
     - name: Generate changelog
       if: inputs.changelog
       id: changelog
-      uses: harmony-labs/action-vnext@feat/args
+      uses: harmony-labs/action-vnext@v0.8.0
       with:
         args: "--changelog"
 
