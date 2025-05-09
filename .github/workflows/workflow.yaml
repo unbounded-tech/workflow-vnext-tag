@@ -74,13 +74,13 @@ jobs:
         echo "version=$CURRENT" >> $GITHUB_OUTPUT
 
     - name: Show version calculation info (for humans)
-      uses: harmony-labs/action-vnext@0624c1b674558d3f31470d423058a362ddfe6745 # v0.7.0
+      uses: harmony-labs/action-vnext@cfa52722f21ade95b899e58ede9c66269b4282ee # v0.8.0
       env:
         LOG_LEVEL: debug
 
     - name: Compute next version using action-vnext
       id: next
-      uses: harmony-labs/action-vnext@0624c1b674558d3f31470d423058a362ddfe6745 # v0.7.0
+      uses: harmony-labs/action-vnext@cfa52722f21ade95b899e58ede9c66269b4282ee # v0.8.0
 
     - name: Gate
       id: gate
