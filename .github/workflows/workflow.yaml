@@ -209,6 +209,7 @@ jobs:
           exit 0
         fi
         echo "Committing changes..."
+        git add -A
         git config --local user.email "github-actions[bot]@users.noreply.github.com"
         git config --local user.name "github-actions[bot]"
         git commit -am "chore: set version to v${{ steps.next.outputs.version }}"
