@@ -1,4 +1,4 @@
-# Workflow for Any Project With Releases
+# workflow-vnext-tag
 
 This repository offers a GitHub workflows which handles versioning, and tagging in a language agnostic way, using `vnext`. It can be used along with some of our other workflows.
 
