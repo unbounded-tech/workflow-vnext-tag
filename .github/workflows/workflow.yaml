@@ -2,6 +2,12 @@ name: github-release
 on:
   workflow_call:
     inputs: 
+
+      changelog:
+        type: boolean
+        required: false
+        default: true
+
       node:
         type: boolean
         required: false
@@ -84,6 +90,19 @@ jobs:
         echo "Continue?: ${{ steps.current.outputs.version != steps.next.outputs.version }}"
         echo "continue=${{ steps.current.outputs.version != steps.next.outputs.version }}" >> $GITHUB_OUTPUT
       
+    - name: Generate changelog
+      if: inputs.changelog
+      id: changelog
+      uses: harmony-labs/action-vnext@feat/args
+      with:
+        args: "--changelog"
+
+    - name: Save CHANGELOG.md
+      if: inputs.changelog
+      run: |
+        echo "Saving changelog to CHANGELOG.md"
+        echo "${{ steps.changelog.outputs.changelog }}" > CHANGELOG.md
+
     - name: Node package version bump
       if: inputs.node && steps.gate.outputs.continue == 'true'
       run: npm version ${{ steps.next.outputs.version }} --git-tag-version false
@@ -181,7 +200,7 @@ jobs:
     - name: set cargo version (Optional)
       if: inputs.rust && steps.gate.outputs.continue == 'true'
       run: set-cargo-version Cargo.toml "${{ steps.next.outputs.version }}"
-
+      
     - name: Commit and push changes if they exist
       if: steps.gate.outputs.continue == 'true'
       run: |

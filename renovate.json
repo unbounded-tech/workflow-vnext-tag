@@ -1,5 +1,5 @@
 {
-  "extends": ["config:best-practices"],
+  "extends": ["config:recommended"],
   "hostRules": [
     {
       "matchHost": "https://github.com/harmony-labs",
