@@ -96,14 +96,14 @@ jobs:
         echo "continue=${{ steps.current.outputs.version != steps.next.outputs.version }}" >> $GITHUB_OUTPUT
       
     - name: Generate changelog
-      if: inputs.changelog
+      if: inputs.changelog && steps.gate.outputs.continue == 'true'
       id: changelog
       uses: harmony-labs/action-vnext@v0.9.0
       with:
         args: "--changelog"
 
     - name: Save CHANGELOG.md
-      if: inputs.changelog
+      if: inputs.changelog && steps.gate.outputs.continue == 'true'
       run: |
         echo "Saving changelog to CHANGELOG.md"
         echo "${{ steps.changelog.outputs.changelog }}" > CHANGELOG.md
