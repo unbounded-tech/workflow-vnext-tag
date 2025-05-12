@@ -94,13 +94,13 @@ jobs:
           echo "version=$CURRENT" >> $GITHUB_OUTPUT
 
       - name: Show version calculation info (for humans)
-        uses: harmony-labs/action-vnext@6cdb16b9f8ea4362e9db71fcd20c1dacaa3989a0 # v0.9.0
+        uses: harmony-labs/action-vnext@546cf73150e6e6e120982d7ad65ec226dd38709f # v0.10.3
         env:
           LOG_LEVEL: debug
 
       - name: Compute next version using action-vnext
         id: next
-        uses: harmony-labs/action-vnext@6cdb16b9f8ea4362e9db71fcd20c1dacaa3989a0 # v0.9.0
+        uses: harmony-labs/action-vnext@546cf73150e6e6e120982d7ad65ec226dd38709f # v0.10.3
 
       - name: Gate
         id: gate
@@ -113,7 +113,7 @@ jobs:
       - name: Generate changelog
         if: inputs.changelog && steps.gate.outputs.continue == 'true'
         id: changelog
-        uses: harmony-labs/action-vnext@v0.9.0
+        uses: harmony-labs/action-vnext@v0.10.3
         with:
           args: "--changelog"
 
