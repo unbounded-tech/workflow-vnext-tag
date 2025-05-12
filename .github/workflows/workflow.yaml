@@ -16,6 +16,12 @@ on:
         type: string
         required: false
 
+      runs-on:
+        description: 'Runner configuration: either a single string (e.g., "ubuntu-latest") or a JSON array'
+        type: string
+        default: 'ubuntu-latest'
+        required: false
+
       rust:
         type: boolean
         required: false
@@ -39,9 +45,18 @@ on:
     
 jobs:
 
-  release:
+  setup:
+    uses: harmony-labs/runs-on/.github/workflows/setup.yaml@v0.1.2
+    with:
+      runs-on: ${{ inputs.runs-on }}
+
+  vnext-tag:
     name: VNext Tag
-    runs-on: ubuntu-latest
+    needs: setup
+    strategy:
+      matrix:
+        include: ${{ fromJSON(needs.setup.outputs.matrix) }}
+    runs-on: ${{ matrix.runs-on }}
             
     permissions:
       packages: write
