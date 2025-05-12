@@ -216,23 +216,12 @@ jobs:
 
         rm .tmp/regex-patches.yaml
 
-    - uses: actions/cache@v4
-      if: inputs.rust && steps.gate.outputs.continue == 'true'
-      with:
-        path: |
-          ~/.cargo/bin/
-          ~/.cargo/registry/index/
-          ~/.cargo/registry/cache/
-          ~/.cargo/git/db/
-        key: ${{ runner.os }}-cargo
-
-    - name: install set-cargo-version (Optional)
-      if: inputs.rust && steps.gate.outputs.continue == 'true'
-      run: cargo install set-cargo-version --force
-    
     - name: set cargo version (Optional)
       if: inputs.rust && steps.gate.outputs.continue == 'true'
-      run: set-cargo-version Cargo.toml "${{ steps.next.outputs.version }}"
+      run: |
+        # replace the version in the [package] section of Cargo.toml
+        sed -i -E 's|^(version = ")[^"]+(")|\1${{ steps.next.outputs.version }}\2|' Cargo.toml
+        cargo generate-lockfile
       
     - name: Commit and push changes if they exist
       if: steps.gate.outputs.continue == 'true'
