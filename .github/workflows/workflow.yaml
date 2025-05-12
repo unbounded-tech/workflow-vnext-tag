@@ -1,8 +1,7 @@
 name: github-release
 on:
   workflow_call:
-    inputs: 
-
+    inputs:
       changelog:
         type: boolean
         required: false
@@ -14,6 +13,12 @@ on:
 
       regexPatches:
         type: string
+        required: false
+
+      runs-on:
+        description: 'Runner configuration: either a single string (e.g., "ubuntu-latest") or a JSON array'
+        type: string
+        default: "ubuntu-latest"
         required: false
 
       rust:
@@ -36,193 +41,202 @@ on:
       # https://docs.github.com/en/actions/security-guides/virtual-environments-for-github-hosted-runners/using-the-github_token-in-a-workflow#permissions-for-the-github_token
       DEPLOY_KEY:
         required: false
-    
-jobs:
 
-  release:
+jobs:
+  setup:
+    uses: harmony-labs/runs-on/.github/workflows/setup.yaml@v0.1.2
+    with:
+      runs-on: ${{ inputs.runs-on }}
+
+  vnext-tag:
     name: VNext Tag
-    runs-on: ubuntu-latest
-            
+    needs: setup
+    strategy:
+      matrix:
+        include: ${{ fromJSON(needs.setup.outputs.matrix) }}
+    runs-on: ${{ matrix.runs-on }}
+
     permissions:
       packages: write
       contents: write
 
     steps:
 
-    - name: Checkout
-      if: ${{ !inputs.useDeployKey }}
-      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      with:
-        fetch-depth: 0
+      - uses: runs-on/action@v1
 
-    - name: Checkout
-      if: inputs.useDeployKey
-      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      with:
-        fetch-depth: 0
-        ssh-key: ${{ secrets.DEPLOY_KEY }}
+      - name: Checkout
+        if: ${{ !inputs.useDeployKey }}
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        with:
+          fetch-depth: 0
 
-    - name: fetch tags
-      run: |
-        git fetch --tags
+      - name: Checkout
+        if: inputs.useDeployKey
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        with:
+          fetch-depth: 0
+          ssh-key: ${{ secrets.DEPLOY_KEY }}
 
-    - name: Get current version tag
-      id: current
-      run: |
-        if git rev-parse --git-dir > /dev/null 2>&1; then
-          CURRENT=$(git tag --list 'v*' --sort=-version:refname | head -n1)
-          CURRENT=${CURRENT:-v0.0.0}  # Defaults if CURRENT is empty
-        else
-          CURRENT="v0.0.0"
-        fi
-        CURRENT=${CURRENT#v}
-        echo "version=$CURRENT" >> $GITHUB_OUTPUT
+      - name: fetch tags
+        run: |
+          git fetch --tags
 
-    - name: Show version calculation info (for humans)
-      uses: harmony-labs/action-vnext@546cf73150e6e6e120982d7ad65ec226dd38709f # v0.10.3
-      env:
-        LOG_LEVEL: debug
+      - name: Get current version tag
+        id: current
+        run: |
+          if git rev-parse --git-dir > /dev/null 2>&1; then
+            CURRENT=$(git tag --list 'v*' --sort=-version:refname | head -n1)
+            CURRENT=${CURRENT:-v0.0.0}  # Defaults if CURRENT is empty
+          else
+            CURRENT="v0.0.0"
+          fi
+          CURRENT=${CURRENT#v}
+          echo "version=$CURRENT" >> $GITHUB_OUTPUT
 
-    - name: Compute next version using action-vnext
-      id: next
-      uses: harmony-labs/action-vnext@546cf73150e6e6e120982d7ad65ec226dd38709f # v0.10.3
+      - name: Show version calculation info (for humans)
+        uses: harmony-labs/action-vnext@6cdb16b9f8ea4362e9db71fcd20c1dacaa3989a0 # v0.9.0
+        env:
+          LOG_LEVEL: debug
 
-    - name: Gate
-      id: gate
-      run: |
-        echo "Current version: ${{ steps.current.outputs.version }}"
-        echo "Next version: ${{ steps.next.outputs.version }}"
-        echo "Continue?: ${{ steps.current.outputs.version != steps.next.outputs.version }}"
-        echo "continue=${{ steps.current.outputs.version != steps.next.outputs.version }}" >> $GITHUB_OUTPUT
-      
-    - name: Generate changelog
-      if: inputs.changelog && steps.gate.outputs.continue == 'true'
-      id: changelog
-      uses: harmony-labs/action-vnext@v0.10.3
-      with:
-        args: "--changelog"
+      - name: Compute next version using action-vnext
+        id: next
+        uses: harmony-labs/action-vnext@6cdb16b9f8ea4362e9db71fcd20c1dacaa3989a0 # v0.9.0
 
-    - name: Save CHANGELOG.md
-      if: inputs.changelog && steps.gate.outputs.continue == 'true'
-      run: |
-        echo "Saving changelog to CHANGELOG.md"
-        echo "${{ steps.changelog.outputs.changelog }}" > CHANGELOG.md
-        cat CHANGELOG.md
+      - name: Gate
+        id: gate
+        run: |
+          echo "Current version: ${{ steps.current.outputs.version }}"
+          echo "Next version: ${{ steps.next.outputs.version }}"
+          echo "Continue?: ${{ steps.current.outputs.version != steps.next.outputs.version }}"
+          echo "continue=${{ steps.current.outputs.version != steps.next.outputs.version }}" >> $GITHUB_OUTPUT
 
-    - name: Node package version bump
-      if: inputs.node && steps.gate.outputs.continue == 'true'
-      run: npm version ${{ steps.next.outputs.version }} --git-tag-version false
+      - name: Generate changelog
+        if: inputs.changelog && steps.gate.outputs.continue == 'true'
+        id: changelog
+        uses: harmony-labs/action-vnext@v0.9.0
+        with:
+          args: "--changelog"
 
-    # parse yqPatches yaml input - the key "patches" is required and is an array of objects
-    # these objects contain the keys filePath, selector, and value
-    # for each object, run yq to update the file at filePath with the value at selector to the value
-    # example:
-    # yqPatches: |
-    #   patches:
-    #     - filePath: .gitops/deploy/helm/values.yaml
-    #       selector: .image.tag
-    #     - filePath: .gitops/deploy/helm/Chart.yaml
-    #       selector: .version
-    #     - filePath: config.yaml
-    #       selector: .spec.package
-    #       valuePrefix: ghcr.io/org/package:
-    #     - filePath: config.yaml
-    #       selector: .spec.package
-    #       valuePrefix: v
-    - name: Apply YQ Patches (Optional)
-      if: inputs.yqPatches && steps.gate.outputs.continue == 'true'
-      run: |
-        echo "Applying yq patches..."
+      - name: Save CHANGELOG.md
+        if: inputs.changelog && steps.gate.outputs.continue == 'true'
+        run: |
+          echo "Saving changelog to CHANGELOG.md"
+          echo "${{ steps.changelog.outputs.changelog }}" > CHANGELOG.md
+          cat CHANGELOG.md
 
-        mkdir -p .tmp
-        touch .tmp/yq-patches.yaml
-        echo "${{ inputs.yqPatches }}" >> .tmp/yq-patches.yaml
+      - name: Node package version bump
+        if: inputs.node && steps.gate.outputs.continue == 'true'
+        run: npm version ${{ steps.next.outputs.version }} --git-tag-version false
 
-        echo "TEMP FILE:"
-        cat .tmp/yq-patches.yaml
+      # parse yqPatches yaml input - the key "patches" is required and is an array of objects
+      # these objects contain the keys filePath, selector, and value
+      # for each object, run yq to update the file at filePath with the value at selector to the value
+      # example:
+      # yqPatches: |
+      #   patches:
+      #     - filePath: .gitops/deploy/helm/values.yaml
+      #       selector: .image.tag
+      #     - filePath: .gitops/deploy/helm/Chart.yaml
+      #       selector: .version
+      #     - filePath: config.yaml
+      #       selector: .spec.package
+      #       valuePrefix: ghcr.io/org/package:
+      #     - filePath: config.yaml
+      #       selector: .spec.package
+      #       valuePrefix: v
+      - name: Apply YQ Patches (Optional)
+        if: inputs.yqPatches && steps.gate.outputs.continue == 'true'
+        run: |
+          echo "Applying yq patches..."
 
-        while IFS=$'\t' read -r filePath selector valuePrefix _; do
+          mkdir -p .tmp
+          touch .tmp/yq-patches.yaml
+          echo "${{ inputs.yqPatches }}" >> .tmp/yq-patches.yaml
 
-          echo "\nfilePath:  $filePath"
-          echo "selector: $selector"
-          echo "valuePrefix:  $valuePrefix"
+          echo "TEMP FILE:"
+          cat .tmp/yq-patches.yaml
 
-          value=$(echo "${valuePrefix}${{ steps.next.outputs.version }}")
+          while IFS=$'\t' read -r filePath selector valuePrefix _; do
 
-          # remove wrapping quotes from around $selector
-          selector=$(echo $selector | sed 's/^"\(.*\)"$/\1/')
+            echo "\nfilePath:  $filePath"
+            echo "selector: $selector"
+            echo "valuePrefix:  $valuePrefix"
 
-          echo "Running: yq -i '${selector} = \"${value}\"' ${filePath}\n\n"
-          yq -i "${selector} = \"${value}\"" ${filePath}
+            value=$(echo "${valuePrefix}${{ steps.next.outputs.version }}")
 
-        done < <(yq e '.patches[] | [.filePath, .selector, .valuePrefix] | @tsv' .tmp/yq-patches.yaml | sed 's/""/"/g' )
+            # remove wrapping quotes from around $selector
+            selector=$(echo $selector | sed 's/^"\(.*\)"$/\1/')
 
-        rm .tmp/yq-patches.yaml
+            echo "Running: yq -i '${selector} = \"${value}\"' ${filePath}\n\n"
+            yq -i "${selector} = \"${value}\"" ${filePath}
 
-    # parse regexPatches yaml input - the key "patches" is required and is an array of objects
-    # these objects contain the keys filePath, selector, and value
-    # for each object, run yq to update the file at filePath with the value at selector to the value
-    # example:
-    # regexPatches: |
-    #   patches:
-    #     - filePath: package/composition.yaml
-    #       regex: /ghcr.io/org-name/package-name:(.*)/g
-    #       valuePrefix: ghcr.io/org-name/package-name:v
-    - name: Apply Regex Patches (Optional)
-      if: inputs.regexPatches && steps.gate.outputs.continue == 'true'
-      run: |
-        echo "Applying regex patches..."
+          done < <(yq e '.patches[] | [.filePath, .selector, .valuePrefix] | @tsv' .tmp/yq-patches.yaml | sed 's/""/"/g' )
 
-        mkdir -p .tmp
-        touch .tmp/regex-patches.yaml
-        echo "${{ inputs.regexPatches }}" > .tmp/regex-patches.yaml
+          rm .tmp/yq-patches.yaml
 
-        echo "TEMP FILE:"
-        cat .tmp/regex-patches.yaml
+      # parse regexPatches yaml input - the key "patches" is required and is an array of objects
+      # these objects contain the keys filePath, selector, and value
+      # for each object, run yq to update the file at filePath with the value at selector to the value
+      # example:
+      # regexPatches: |
+      #   patches:
+      #     - filePath: package/composition.yaml
+      #       regex: /ghcr.io/org-name/package-name:(.*)/g
+      #       valuePrefix: ghcr.io/org-name/package-name:v
+      - name: Apply Regex Patches (Optional)
+        if: inputs.regexPatches && steps.gate.outputs.continue == 'true'
+        run: |
+          echo "Applying regex patches..."
 
-        while IFS=$'\t' read -r filePath regex valuePrefix _; do
+          mkdir -p .tmp
+          touch .tmp/regex-patches.yaml
+          echo "${{ inputs.regexPatches }}" > .tmp/regex-patches.yaml
 
-          value=$(echo "${valuePrefix}${{ steps.next.outputs.version }}")
+          echo "TEMP FILE:"
+          cat .tmp/regex-patches.yaml
 
-          # remove wrapping quotes from around $regex
-          regex=$(echo $regex | sed 's#^"\(.*\)"$#\1#')
+          while IFS=$'\t' read -r filePath regex valuePrefix _; do
 
-          echo "\nfilePath:  $filePath"
-          echo "regex: $regex"
-          echo "valuePrefix:  $valuePrefix"
-          echo "value: $value"
+            value=$(echo "${valuePrefix}${{ steps.next.outputs.version }}")
 
-          cat ${filePath} | sed -E "s#${regex}#${value}#g" > .tmp/patched-file.yaml
-          mv .tmp/patched-file.yaml ${filePath}
+            # remove wrapping quotes from around $regex
+            regex=$(echo $regex | sed 's#^"\(.*\)"$#\1#')
 
-        done < <(yq e '.patches[] | [.filePath, .regex, .valuePrefix] | @tsv' .tmp/regex-patches.yaml | sed 's#""#"#g' )
+            echo "\nfilePath:  $filePath"
+            echo "regex: $regex"
+            echo "valuePrefix:  $valuePrefix"
+            echo "value: $value"
 
-        rm .tmp/regex-patches.yaml
+            cat ${filePath} | sed -E "s#${regex}#${value}#g" > .tmp/patched-file.yaml
+            mv .tmp/patched-file.yaml ${filePath}
 
-    - name: install set-cargo-version (Optional)
-      if: inputs.rust && steps.gate.outputs.continue == 'true'
-      run: cargo install set-cargo-version
-    
-    - name: set cargo version (Optional)
-      if: inputs.rust && steps.gate.outputs.continue == 'true'
-      run: set-cargo-version Cargo.toml "${{ steps.next.outputs.version }}"
-      
-    - name: Commit and push changes if they exist
-      if: steps.gate.outputs.continue == 'true'
-      run: |
-        if [ -z "$(git status --porcelain)" ]; then
-          echo "No changes to commit"
-          exit 0
-        fi
-        echo "Committing changes..."
-        git add -A
-        git config --local user.email "github-actions[bot]@users.noreply.github.com"
-        git config --local user.name "github-actions[bot]"
-        git commit -am "chore: set version to v${{ steps.next.outputs.version }}"
+          done < <(yq e '.patches[] | [.filePath, .regex, .valuePrefix] | @tsv' .tmp/regex-patches.yaml | sed 's#""#"#g' )
 
-    - name: Create and push tag
-      if: steps.gate.outputs.continue == 'true'
-      run: |
-        echo "Creating tag v${{ steps.next.outputs.version }}..."
-        git tag v${{ steps.next.outputs.version }}
-        git push --tags
+          rm .tmp/regex-patches.yaml
+
+      - name: set cargo version (Optional)
+        if: inputs.rust && steps.gate.outputs.continue == 'true'
+        run: |
+          # replace the version in the [package] section of Cargo.toml
+          sed -i -E 's|^(version = ")[^"]+(")|\1${{ steps.next.outputs.version }}\2|' Cargo.toml
+          cargo generate-lockfile
+
+      - name: Commit and push changes if they exist
+        if: steps.gate.outputs.continue == 'true'
+        run: |
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          echo "Committing changes..."
+          git add -A
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git commit -am "chore: set version to v${{ steps.next.outputs.version }}"
+
+      - name: Create and push tag
+        if: steps.gate.outputs.continue == 'true'
+        run: |
+          echo "Creating tag v${{ steps.next.outputs.version }}..."
+          git tag v${{ steps.next.outputs.version }}
+          git push --tags
