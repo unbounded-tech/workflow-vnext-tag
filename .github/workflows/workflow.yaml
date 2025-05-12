@@ -64,6 +64,8 @@ jobs:
 
     steps:
 
+    - uses: runs-on/action@v1
+
     - name: Checkout
       if: ${{ !inputs.useDeployKey }}
       uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -213,6 +215,16 @@ jobs:
         done < <(yq e '.patches[] | [.filePath, .regex, .valuePrefix] | @tsv' .tmp/regex-patches.yaml | sed 's#""#"#g' )
 
         rm .tmp/regex-patches.yaml
+
+    - uses: actions/cache@v4
+      if: inputs.rust && steps.gate.outputs.continue == 'true'
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+        key: ${{ runner.os }}-cargo
 
     - name: install set-cargo-version (Optional)
       if: inputs.rust && steps.gate.outputs.continue == 'true'
