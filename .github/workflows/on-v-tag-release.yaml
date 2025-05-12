@@ -2,7 +2,7 @@ name: On Tag Push, Create Release
 on:
   push:
     tags:
-    - "v*.*.*"
+      - "v*.*.*"
 
 permissions:
   contents: write
