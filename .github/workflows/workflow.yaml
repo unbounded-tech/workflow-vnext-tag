@@ -228,7 +228,7 @@ jobs:
 
     - name: install set-cargo-version (Optional)
       if: inputs.rust && steps.gate.outputs.continue == 'true'
-      run: cargo install set-cargo-version
+      run: cargo install set-cargo-version --force
     
     - name: set cargo version (Optional)
       if: inputs.rust && steps.gate.outputs.continue == 'true'
