@@ -26,6 +26,12 @@ on:
         required: false
         default: false
 
+      setup-runs-on:
+        description: 'Setup job runs-on: Single string only (e.g., "ubuntu-latest")'
+        type: string
+        default: 'ubuntu-latest'
+        required: false
+
       yqPatches:
         type: string
         required: false
@@ -44,9 +50,10 @@ on:
 
 jobs:
   setup:
-    uses: harmony-labs/runs-on/.github/workflows/setup.yaml@v0.1.2
+    uses: harmony-labs/runs-on/.github/workflows/setup.yaml@v0.2.0
     with:
       runs-on: ${{ inputs.runs-on }}
+      this-job-runs-on: ${{ inputs.setup-runs-on }}
 
   vnext-tag:
     name: VNext Tag
