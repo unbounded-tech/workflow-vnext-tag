@@ -41,11 +41,28 @@ on:
         required: false
         default: false
 
+      usePAT:
+        type: boolean
+        required: false
+        default: false
+
     secrets:
+      #
       # this workflow creates a tag, which can trigger other workflows
-      # so we need to use a deploy key - GITHUB_TOKEN, the default for checkout, does not allow cascade of workflows to prevent people from doing it by accident
+      # so we need to use a deploy key or a github personal access token.
+      #
+      # we recommend using a deploy key per repo
+      # they can be generated and forgotten, and rotated easily.
+      # or an org wide PAT if you're rich and pay for GitHub.
+      #
+      # The built-in `GITHUB_TOKEN`, does not allow a workflow to trigger another workflow, which is
+      # the intended use of this workflow.
       # https://docs.github.com/en/actions/security-guides/virtual-environments-for-github-hosted-runners/using-the-github_token-in-a-workflow#permissions-for-the-github_token
       DEPLOY_KEY:
+        required: false
+
+      GH_PAT:
+        description: 'GitHub Personal Access Token (PAT) with repo,write:packages scopes'
         required: false
 
 jobs:
@@ -73,16 +90,23 @@ jobs:
 
       - name: Checkout
         if: ${{ !inputs.useDeployKey }}
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        uses: actions/checkout@v4.2.2
         with:
           fetch-depth: 0
 
-      - name: Checkout
+      - name: Checkout w/ Deploy Key
         if: inputs.useDeployKey
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        uses: actions/checkout@v4.2.2
         with:
           fetch-depth: 0
           ssh-key: ${{ secrets.DEPLOY_KEY }}
+      
+      - name: Checkout w/ PAT
+        if: inputs.usePAT
+        uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GH_PAT }}
 
       - name: fetch tags
         run: |
@@ -101,13 +125,13 @@ jobs:
           echo "version=$CURRENT" >> $GITHUB_OUTPUT
 
       - name: Show version calculation info (for humans)
-        uses: harmony-labs/action-vnext@546cf73150e6e6e120982d7ad65ec226dd38709f # v0.10.3
+        uses: harmony-labs/action-vnext@v0.10.3
         env:
           LOG_LEVEL: debug
 
       - name: Compute next version using action-vnext
         id: next
-        uses: harmony-labs/action-vnext@546cf73150e6e6e120982d7ad65ec226dd38709f # v0.10.3
+        uses: harmony-labs/action-vnext@v0.10.3
 
       - name: Gate
         id: gate
