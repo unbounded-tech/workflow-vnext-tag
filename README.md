@@ -10,7 +10,7 @@ This repository offers a GitHub workflows which handles versioning, and tagging 
   Automated builds, tests, linting, and formatting checks ensure your code remains robust and maintainable. Efficient caching strategies further reduce build times.
 
 - **Release Management:**  
-  While this repository manages CI and quality checks, you can integrate it with the separate [harmony-labs/workflow-release](https://github.com/harmony-labs/workflow-release) project to automate version bumps, tag creation, and GitHub Releases. In particular, the `release.yaml` workflow is a powerful tool for building and releasing Rust binaries across multiple platforms.
+  While this repository manages CI and quality checks, you can integrate it with the separate [unbounded-tech/workflow-release](https://github.com/unbounded-tech/workflow-release) project to automate version bumps, tag creation, and GitHub Releases. In particular, the `release.yaml` workflow is a powerful tool for building and releasing Rust binaries across multiple platforms.
 
 ---
 
@@ -29,7 +29,7 @@ on:
 
 jobs:
   quality:
-    uses: harmony-labs/workflow-rust-quality/.github/workflows/quality.yaml@main
+    uses: unbounded-tech/workflow-rust-quality/.github/workflows/quality.yaml@main
     with:
       cargo_test_args: '--verbose'
       lint: true
@@ -39,7 +39,7 @@ jobs:
 
 ### Quality, Versioning & Tagging
 
-Use with other harmony-labs workflows to automatically generate versions and create Git tags based on commit logs, ensuring that only meaningful changes trigger a version bump.
+Use with other unbounded-tech workflows to automatically generate versions and create Git tags based on commit logs, ensuring that only meaningful changes trigger a version bump.
 
 **Example:**
 ```yaml
@@ -50,14 +50,14 @@ on:
 
 jobs:
   quality:
-    uses: harmony-labs/workflow-rust-quality/.github/workflows/workflow.yaml@main
+    uses: unbounded-tech/workflow-rust-quality/.github/workflows/workflow.yaml@main
     with:
       cargo_test_args: '--verbose'
       lint: true
 
   version-and-tag:
     needs: quality
-    uses: harmony-labs/workflow-vnext-tag/.github/workflows/workflow.yaml@main
+    uses: unbounded-tech/workflow-vnext-tag/.github/workflows/workflow.yaml@main
     secrets: inherit
     with:
       useDeployKey: true
@@ -81,7 +81,7 @@ on:
 
 jobs:
   publish:
-    uses: harmony-labs/workflow-rust-release/.github/workflows/workflow.yaml@main
+    uses: unbounded-tech/workflow-rust-release/.github/workflows/workflow.yaml@main
     with:
       executable_name: my-app
       platforms: '[{"os-name": "Linux-x86_64", "runs-on": "ubuntu-24.04", "target": "x86_64-unknown-linux-musl"}]'
@@ -95,7 +95,7 @@ jobs:
    Copy the example snippets into your project’s `.github/workflows` directory. Adjust the inputs to match your project's specific needs.
 
 2. **Enhance Your Release Process:**  
-   For a full release management experience—including automated versioning, tagging, and artifact publishing—integrate the separate [harmony-labs/workflow-release](https://github.com/harmony-labs/workflow-release) project with these workflows.
+   For a full release management experience—including automated versioning, tagging, and artifact publishing—integrate the separate [unbounded-tech/workflow-release](https://github.com/unbounded-tech/workflow-release) project with these workflows.
 
 ---
 
@@ -115,4 +115,4 @@ jobs:
 
 ---
 
-Enhance your Rust development workflow with these GitHub actions and the complementary [harmony-labs/workflow-release](https://github.com/harmony-labs/workflow-release) project. Enjoy robust quality assurance and seamless cross-platform releases every time you push new code!
+Enhance your Rust development workflow with these GitHub actions and the complementary [unbounded-tech/workflow-release](https://github.com/unbounded-tech/workflow-release) project. Enjoy robust quality assurance and seamless cross-platform releases every time you push new code!

@@ -2,7 +2,7 @@
   "extends": ["config:recommended"],
   "hostRules": [
     {
-      "matchHost": "https://github.com/harmony-labs",
+      "matchHost": "https://github.com/unbounded-tech",
       "hostType": "git-tags"
     }
   ]

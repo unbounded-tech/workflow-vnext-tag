@@ -16,7 +16,7 @@ on:
         required: false
 
       runs-on:
-        description: 'Runner configuration: either a single string (e.g., "ubuntu-latest") or a JSON array'
+        description: 'The type of runner to use for this job. Defaults to "ubuntu-latest".'
         type: string
         default: "ubuntu-latest"
         required: false
@@ -25,12 +25,6 @@ on:
         type: boolean
         required: false
         default: false
-
-      setup-runs-on:
-        description: 'Setup job runs-on: Single string only (e.g., "ubuntu-latest")'
-        type: string
-        default: 'ubuntu-latest'
-        required: false
 
       yqPatches:
         type: string
@@ -66,19 +60,10 @@ on:
         required: false
 
 jobs:
-  setup:
-    uses: harmony-labs/runs-on/.github/workflows/setup.yaml@v0.2.0
-    with:
-      runs-on: ${{ inputs.runs-on }}
-      this-job-runs-on: ${{ inputs.setup-runs-on }}
 
   vnext-tag:
     name: VNext Tag
-    needs: setup
-    strategy:
-      matrix:
-        include: ${{ fromJSON(needs.setup.outputs.matrix) }}
-    runs-on: ${{ matrix.runs-on }}
+    runs-on: ${{ inputs.runs-on }}
 
     permissions:
       packages: write
@@ -86,7 +71,7 @@ jobs:
 
     steps:
 
-      - uses: runs-on/action@v1
+      - uses: runs-on/action@v1.0.0
 
       - name: Checkout
         if: ${{ !inputs.useDeployKey }}
@@ -125,13 +110,13 @@ jobs:
           echo "version=$CURRENT" >> $GITHUB_OUTPUT
 
       - name: Show version calculation info (for humans)
-        uses: harmony-labs/action-vnext@v0.10.3
+        uses: unbounded-tech/action-vnext@v0.11.0
         env:
           LOG_LEVEL: debug
 
       - name: Compute next version using action-vnext
         id: next
-        uses: harmony-labs/action-vnext@v0.10.3
+        uses: unbounded-tech/action-vnext@v0.11.0
 
       - name: Gate
         id: gate
@@ -144,7 +129,7 @@ jobs:
       - name: Generate changelog
         if: inputs.changelog && steps.gate.outputs.continue == 'true'
         id: changelog
-        uses: harmony-labs/action-vnext@v0.10.3
+        uses: unbounded-tech/action-vnext@v0.11.0
         with:
           args: "--changelog"
 
