@@ -5,5 +5,12 @@
       "matchHost": "https://github.com/unbounded-tech",
       "hostType": "git-tags"
     }
+  ],
+  "semanticCommits": "enabled",
+  "packageRules": [
+    {
+      "matchManagers": ["github-actions"],
+      "semanticCommitType": "fix"
+    }
   ]
 }
