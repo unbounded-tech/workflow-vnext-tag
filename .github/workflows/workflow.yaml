@@ -110,13 +110,13 @@ jobs:
           echo "version=$CURRENT" >> $GITHUB_OUTPUT
 
       - name: Show version calculation info (for humans)
-        uses: unbounded-tech/action-vnext@v1.0.0
+        uses: unbounded-tech/action-vnext@v1.1.0
         env:
           LOG_LEVEL: debug
 
       - name: Compute next version using action-vnext
         id: next
-        uses: unbounded-tech/action-vnext@v1.0.0
+        uses: unbounded-tech/action-vnext@v1.1.0
 
       - name: Gate
         id: gate
@@ -129,7 +129,7 @@ jobs:
       - name: Generate changelog
         if: inputs.changelog && steps.gate.outputs.continue == 'true'
         id: changelog
-        uses: unbounded-tech/action-vnext@v1.0.0
+        uses: unbounded-tech/action-vnext@v1.1.0
         with:
           args: "--changelog"
 
