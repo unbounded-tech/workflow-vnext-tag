@@ -71,7 +71,7 @@ jobs:
 
     steps:
 
-      - uses: runs-on/action@v1.1.0
+      - uses: runs-on/action@v2.0.3
 
       - name: Checkout
         if: ${{ !inputs.useDeployKey }}
