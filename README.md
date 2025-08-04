@@ -1,35 +1,193 @@
 # workflow-vnext-tag
 
-This repository offers a GitHub workflows which handles versioning, and tagging in a language agnostic way, using `vnext`. It can be used along with some of our other workflows.
+This repository offers a GitHub workflow which handles versioning and tagging in a language-agnostic way, using `vnext`. It can be used along with some of our other workflows.
 
 ---
 
 ## Overview
 
-- **Quality Assurance:**  
-  Automated builds, tests, linting, and formatting checks ensure your code remains robust and maintainable. Efficient caching strategies further reduce build times.
+- **Automated Versioning:**  
+  Automatically calculates the next semantic version based on commit history using the `vnext` tool.
+
+- **Language-Agnostic Updates:**  
+  Updates version references in various file types using flexible patching mechanisms (YQ and Regex).
 
 - **Release Management:**  
-  While this repository manages CI and quality checks, you can integrate it with the separate [unbounded-tech/workflow-release](https://github.com/unbounded-tech/workflow-release) project to automate version bumps, tag creation, and GitHub Releases. In particular, the `release.yaml` workflow is a powerful tool for building and releasing Rust binaries across multiple platforms.
+  While this repository manages versioning and tagging, you can integrate it with the separate [unbounded-tech/workflow-release](https://github.com/unbounded-tech/workflow-release) project to automate GitHub Releases.
+
+---
+
+## Workflow Inputs
+
+The workflow accepts the following inputs:
+
+| Input | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `changelog` | boolean | No | `true` | Generate and save a changelog based on commit history |
+| `node` | boolean | No | `false` | Update version in package.json for Node.js projects |
+| `regexPatches` | string | No | | Apply regex-based patches to update version references (see details below) |
+| `runs-on` | string | No | `ubuntu-latest` | The type of runner to use for this job |
+| `rust` | boolean | No | `false` | Update version in Cargo.toml for Rust projects |
+| `yqPatches` | string | No | | Apply YQ-based patches to update version in YAML files (see details below) |
+| `useDeployKey` | boolean | No | `false` | Use SSH deploy key for git operations |
+| `usePAT` | boolean | No | `false` | Use GitHub Personal Access Token for git operations |
+
+### Secrets
+
+| Secret | Required | Description |
+|--------|----------|-------------|
+| `DEPLOY_KEY` | No | SSH deploy key for git operations when `useDeployKey` is true |
+| `GH_PAT` | No | GitHub Personal Access Token with repo,write:packages scopes when `usePAT` is true |
+
+> **Note:** This workflow creates a tag, which can trigger other workflows. The built-in `GITHUB_TOKEN` does not allow a workflow to trigger another workflow, so you need to use either a deploy key or a GitHub personal access token. We recommend using a deploy key per repo as they can be generated, forgotten, and rotated easily.
+
+---
+
+## Language-Agnostic Patch Options
+
+For optimal performance and flexibility, this workflow provides two language-agnostic methods to update version references in your files: YQ Patches and Regex Patches.
+
+### YQ Patches
+
+YQ Patches allow you to update version references in YAML files using [YQ](https://github.com/mikefarah/yq), a lightweight and portable command-line YAML processor.
+
+**Input Format:**
+```yaml
+yqPatches: |
+  patches:
+    - filePath: path/to/file.yaml
+      selector: .path.to.property
+      valuePrefix: optional-prefix-
+    - filePath: another/file.yaml
+      selector: .another.property
+      valuePrefix: v
+```
+
+**Parameters:**
+- `filePath`: Path to the YAML file to update
+- `selector`: YQ selector expression pointing to the property to update
+- `valuePrefix`: Prefix to add before the version number - not optional, set to empty string "" if not needed.
+
+**Version Substitution:**
+The workflow automatically substitutes the calculated version number (e.g., `0.1.0`) at the specified location. The `valuePrefix` parameter allows you to customize what appears before the version number:
+
+- Without prefix: `0.1.0` → `0.1.0`
+- With prefix `v`: `0.1.0` → `v0.1.0`
+- With prefix `ghcr.io/org/package:v`: `0.1.0` → `ghcr.io/org/package:v0.1.0`
+
+**Example:**
+```yaml
+yqPatches: |
+  patches:
+    - filePath: .gitops/deploy/helm/values.yaml
+      selector: .image.tag
+      valuePrefix: ""
+    - filePath: .gitops/deploy/helm/Chart.yaml
+      selector: .version
+      valuePrefix: ""
+    - filePath: config.yaml
+      selector: .spec.package
+      valuePrefix: ghcr.io/org/package:v
+```
+
+This will:
+1. Update `.image.tag` in `.gitops/deploy/helm/values.yaml` to the new version (e.g., `0.1.0` → `0.1.0`)
+2. Update `.version` in `.gitops/deploy/helm/Chart.yaml` to the new version (e.g., `0.1.0` → `0.1.0`)
+3. Update `.spec.package` in `config.yaml` to include the prefix and new version (e.g., `0.1.0` → `ghcr.io/org/package:v0.1.0`)
+
+### Regex Patches
+
+Regex Patches provide a more flexible approach to update version references in any text-based file using regular expressions.
+
+**Input Format:**
+```yaml
+regexPatches: |
+  patches:
+    - filePath: path/to/file
+      regex: pattern-to-match
+      valuePrefix: replacement-prefix
+```
+
+**Parameters:**
+- `filePath`: Path to the file to update
+- `regex`: Regular expression pattern to match (use `/pattern/g` format for global replacement)
+- `valuePrefix`: Prefix to add before the version number in the replacement
+
+**Version Substitution:**
+The workflow automatically substitutes the calculated version number (e.g., `0.1.0`) in the replacement. The `valuePrefix` parameter allows you to customize what appears before the version number:
+
+- With prefix `v`: `0.1.0` → `v0.1.0`
+- With prefix `ghcr.io/org-name/package-name:v`: `0.1.0` → `ghcr.io/org-name/package-name:v0.1.0`
+- With prefix `Current version: v`: `0.1.0` → `Current version: v0.1.0`
+
+**Example:**
+```yaml
+regexPatches: |
+  patches:
+    - filePath: package/composition.yaml
+      regex: /ghcr.io/org-name/package-name:(.*)/g
+      valuePrefix: ghcr.io/org-name/package-name:v
+    - filePath: README.md
+      regex: /Current version: v[0-9]+\.[0-9]+\.[0-9]+/g
+      valuePrefix: Current version: v
+```
+
+This will:
+1. Replace all occurrences matching the regex in `package/composition.yaml` with the prefix plus the new version (e.g., `0.1.0` → `ghcr.io/org-name/package-name:v0.1.0`)
+2. Replace all occurrences matching the regex in `README.md` with the prefix plus the new version (e.g., `0.1.0` → `Current version: v0.1.0`)
 
 ---
 
 ## Example Usage
 
-Here is a full example of a Rust release process - it's meant to show how to use the tool. The language of the surrounding jobs to workflow-vnext-tag are irrelevant. The step works with any language. This is just one full example for an understanding of it's usage in context.
+Here are examples of how to use the workflow in different scenarios:
 
-### Rust Example
+### Basic Example with Language-Agnostic Patching
 
-#### Quality & Tag Version
-
-On pushes to your trunk branch (main/master):
-
-**Example:**
 ```yaml
 on:
   push:
     branches:
       - main
+
+jobs:
+  quality:
+    # Your quality checks here
+    
+  version-and-tag:
+    needs: quality
+    uses: unbounded-tech/workflow-vnext-tag/.github/workflows/workflow.yaml@main
+    secrets: inherit
+    with:
+      useDeployKey: true
+      yqPatches: |
+        patches:
+          - filePath: deploy/values.yaml
+            selector: .image.tag
+            valuePrefix: v
+          - filePath: deploy/Chart.yaml
+            selector: .version
+            valuePrefix: v
+```
+
+### Full Rust Example
+
+To understand how the workflow fits into the larger picture, here is a full rust example.
+
+First, set up a deploy key for the repo - you can use the vnext CLI to do so:
+
+```
+vnext generate-deploy-key
+```
+
+Then, on pushes to your trunk branch (main/master):
+
+```yaml
+on:
+  push:
+    branches:
+      - main
+      - master
 
 jobs:
   quality:
@@ -47,7 +205,7 @@ jobs:
       rust: true
 ```
 
-#### Releasing Rust Binaries
+### Releasing Rust Binaries
 
 The Version and tag job creates a tag - make sure to set up a deploy key for your repo and a secret to use it via the `vnext` CLI.
 
@@ -66,34 +224,3 @@ jobs:
     with:
       executable_name: my-app
       platforms: '[{"os-name": "Linux-x86_64", "runs-on": "ubuntu-24.04", "target": "x86_64-unknown-linux-musl"}]'
-```
-
----
-
-## Getting Started
-
-1. **Integrate the Workflows:**  
-   Copy the example snippets into your project’s `.github/workflows` directory. Adjust the inputs to match your project's specific needs.
-
-2. **Enhance Your Release Process:**  
-   For a full release management experience—including automated versioning, tagging, and artifact publishing—integrate the separate [unbounded-tech/workflow-release](https://github.com/unbounded-tech/workflow-release) project with these workflows.
-
----
-
-## Best Practices
-
-- **Run Early Quality Checks:**  
-  Execute the quality pipeline on every push to ensure issues are caught before merging.
-
-- **Automate Versioning:**  
-  Leverage commit messages to drive your versioning strategy, minimizing manual intervention and errors.
-
-- **Support Multiple Platforms:**  
-  Use the `release.yaml` workflow’s matrix strategy to build and release your Rust binaries on all major platforms.
-
-- **Keep Workflows Modular:**  
-  Separate continuous integration from release management. This modularity simplifies maintenance and allows each process to excel in its role.
-
----
-
-Enhance your Rust development workflow with these GitHub actions and the complementary [unbounded-tech/workflow-release](https://github.com/unbounded-tech/workflow-release) project. Enjoy robust quality assurance and seamless cross-platform releases every time you push new code!
