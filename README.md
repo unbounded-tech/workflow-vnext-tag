@@ -14,32 +14,15 @@ This repository offers a GitHub workflows which handles versioning, and tagging 
 
 ---
 
-## Key Workflows & Their Triggers
+## Example Usage
 
-### Quality Pipeline
+Here is a full example of a Rust release process - it's meant to show how to use the tool. The language of the surrounding jobs to workflow-vnext-tag are irrelevant. The step works with any language. This is just one full example for an understanding of it's usage in context.
 
-Run your code quality checks automatically on code updates.
+### Rust Example
 
-**Example:**
-```yaml
-on:
-  push:
-    branches:
-      - main
+#### Quality & Tag Version
 
-jobs:
-  quality:
-    uses: unbounded-tech/workflow-rust-quality/.github/workflows/quality.yaml@main
-    with:
-      cargo_test_args: '--verbose'
-      lint: true
-```
-
----
-
-### Quality, Versioning & Tagging
-
-Use with other unbounded-tech workflows to automatically generate versions and create Git tags based on commit logs, ensuring that only meaningful changes trigger a version bump.
+On pushes to your trunk branch (main/master):
 
 **Example:**
 ```yaml
@@ -64,11 +47,9 @@ jobs:
       rust: true
 ```
 
-And then add the following release job.
+#### Releasing Rust Binaries
 
-### Releasing Rust Binaries
-
-The Version and tag job creates a tag - make sure to set up a deploy key for your repo and a secret to use it (will automate later).
+The Version and tag job creates a tag - make sure to set up a deploy key for your repo and a secret to use it via the `vnext` CLI.
 
 The `release.yaml` workflow is designed for building and releasing Rust binaries across multiple platforms using a matrix strategy. It helps you publish artifacts as GitHub Releases with ease. It picks up where version-and-tag leaves off.
 

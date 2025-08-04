@@ -52,6 +52,9 @@ on:
       # The built-in `GITHUB_TOKEN`, does not allow a workflow to trigger another workflow, which is
       # the intended use of this workflow.
       # https://docs.github.com/en/actions/security-guides/virtual-environments-for-github-hosted-runners/using-the-github_token-in-a-workflow#permissions-for-the-github_token
+      #
+      # You can create a deploy key and configure it's secret for usage with the vnext CLI tool - see project's README for details:
+      # https://github.com/unbounded-tech/vnext
       DEPLOY_KEY:
         required: false
 
