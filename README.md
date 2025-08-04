@@ -2,8 +2,6 @@
 
 This repository offers a GitHub workflow which handles versioning and tagging in a language-agnostic way, using `vnext`. It can be used along with some of our other workflows.
 
----
-
 ## Overview
 
 - **Automated Versioning:**  
@@ -11,11 +9,6 @@ This repository offers a GitHub workflow which handles versioning and tagging in
 
 - **Language-Agnostic Updates:**  
   Updates version references in various file types using flexible patching mechanisms (YQ and Regex).
-
-- **Release Management:**  
-  While this repository manages versioning and tagging, you can integrate it with the separate [unbounded-tech/workflow-release](https://github.com/unbounded-tech/workflow-release) project to automate GitHub Releases.
-
----
 
 ## Workflow Inputs
 
@@ -40,8 +33,6 @@ The workflow accepts the following inputs:
 | `GH_PAT` | No | GitHub Personal Access Token with repo,write:packages scopes when `usePAT` is true |
 
 > **Note:** This workflow creates a tag, which can trigger other workflows. The built-in `GITHUB_TOKEN` does not allow a workflow to trigger another workflow, so you need to use either a deploy key or a GitHub personal access token. We recommend using a deploy key per repo as they can be generated, forgotten, and rotated easily.
-
----
 
 ## Language-Agnostic Patch Options
 
@@ -135,8 +126,6 @@ regexPatches: |
 This will:
 1. Replace all occurrences matching the regex in `package/composition.yaml` with the prefix plus the new version (e.g., `0.1.0` → `ghcr.io/org-name/package-name:v0.1.0`)
 2. Replace all occurrences matching the regex in `README.md` with the prefix plus the new version (e.g., `0.1.0` → `Current version: v0.1.0`)
-
----
 
 ## Example Usage
 
