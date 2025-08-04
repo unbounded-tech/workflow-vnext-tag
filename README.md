@@ -1,6 +1,6 @@
 # workflow-vnext-tag
 
-This repository offers a GitHub workflow which handles versioning and tagging in a language-agnostic way, using `vnext`. It can be used along with some of our other workflows.
+This repository offers a GitHub workflow which handles versioning, tagging, and changelogs in a language-agnostic way by depending on `git`, using `vnext`. It can be used along with some of our other workflows.
 
 ## Overview
 
