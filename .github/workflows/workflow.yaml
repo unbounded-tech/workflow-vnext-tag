@@ -77,7 +77,7 @@ jobs:
       - uses: runs-on/action@v2.0.3
 
       - name: Checkout
-        if: ${{ !inputs.useDeployKey }}
+        if: ${{ !inputs.useDeployKey && !inputs.usePAT }}
         uses: actions/checkout@v4.2.2
         with:
           fetch-depth: 0
