@@ -115,13 +115,14 @@ jobs:
           curl --silent --location \
               https://raw.githubusercontent.com/houseabsolute/ubi/master/bootstrap/bootstrap-ubi.sh |
               sh
+          ubi --version
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install vnext
         run: |
           echo "Installing vnext..."
-          "$HOME/bin/ubi" --project unbounded-tech/vnext --tag v1.8.0 --in "$HOME/bin"
+          ubi --project unbounded-tech/vnext --tag v1.8.0 --in /bin
           vnext --version
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
