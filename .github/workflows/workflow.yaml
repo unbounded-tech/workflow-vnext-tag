@@ -100,26 +100,51 @@ jobs:
         run: |
           git fetch --tags
 
+      - name: Create bin directory for ubi
+        shell: bash
+        run: |
+          # Create the directory if it doesn't exist
+          mkdir -p /home/runner/bin
+          # Add to PATH (yes, this github syntax preserves existing PATH and adds the new directory)
+          echo "/home/runner/bin" >> $GITHUB_PATH
+          echo "Created /home/runner/bin and added to PATH (existing PATH is preserved)"
+
+      - name: Install and configure ubi
+        shell: bash
+        run: |
+          curl --silent --location \
+              https://raw.githubusercontent.com/houseabsolute/ubi/master/bootstrap/bootstrap-ubi.sh |
+              sh
+          ubi --version
+          echo "$(pwd)/bin" >> $GITHUB_PATH
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install vnext
+        run: |
+          echo "Installing vnext..."
+          ubi --project unbounded-tech/vnext --tag v1.8.0
+          vnext --version
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Get current version tag
         id: current
         run: |
-          if git rev-parse --git-dir > /dev/null 2>&1; then
-            CURRENT=$(git tag --list 'v*' --sort=-version:refname | head -n1)
-            CURRENT=${CURRENT:-v0.0.0}  # Defaults if CURRENT is empty
-          else
-            CURRENT="v0.0.0"
-          fi
-          CURRENT=${CURRENT#v}
+          CURRENT=$(vnext --current)
           echo "version=$CURRENT" >> $GITHUB_OUTPUT
+          echo "Current version: $CURRENT"
 
       - name: Show version calculation info (for humans)
-        uses: unbounded-tech/action-vnext@v1.3.0
-        env:
-          LOG_LEVEL: debug
+        run: |
+          LOG_LEVEL=debug vnext
 
-      - name: Compute next version using action-vnext
+      - name: Compute next version using vnext
         id: next
-        uses: unbounded-tech/action-vnext@v1.3.0
+        run: |
+          NEXT_VERSION=$(vnext)
+          echo "version=$NEXT_VERSION" >> $GITHUB_OUTPUT
+          echo "Next version: $NEXT_VERSION"
 
       - name: Gate
         id: gate
@@ -129,37 +154,33 @@ jobs:
           echo "Continue?: ${{ steps.current.outputs.version != steps.next.outputs.version }}"
           echo "continue=${{ steps.current.outputs.version != steps.next.outputs.version }}" >> $GITHUB_OUTPUT
 
-      - name: Generate changelog
-        if: inputs.changelog && steps.gate.outputs.continue == 'true'
-        id: changelog
-        uses: unbounded-tech/action-vnext@v1.3.0
-        with:
-          args: "--changelog"
-
       - name: Save CHANGELOG.md
         if: inputs.changelog && steps.gate.outputs.continue == 'true'
         run: |
           echo "Saving changelog to CHANGELOG.md"
-          echo "${{ steps.changelog.outputs.changelog }}" > CHANGELOG.md
+          vnext --changelog > CHANGELOG.md
           cat CHANGELOG.md
 
-      - name: Node package version bump
-        if: inputs.node && steps.gate.outputs.continue == 'true'
-        run: npm version ${{ steps.next.outputs.version }} --git-tag-version false
+      # BUMPS
+      # These are optional and can be enabled via inputs
+      # Generic patch strategies - YQ and Regex
 
       # parse yqPatches yaml input - the key "patches" is required and is an array of objects
-      # these objects contain the keys filePath, selector, and value
-      # for each object, run yq to update the file at filePath with the value at selector to the value
-      # example:
+      # these objects contain the keys filePath, selector, and valuePrefix.
+      # for each object, yq updates the file at filePath 
+      # with ${valuePrefix}${versionNumber} at selector to the value
+      # examples:
       # yqPatches: |
       #   patches:
       #     - filePath: .gitops/deploy/helm/values.yaml
       #       selector: .image.tag
+      #       valuePrefix: v
       #     - filePath: .gitops/deploy/helm/Chart.yaml
       #       selector: .version
+      #       valuePrefix: v
       #     - filePath: config.yaml
       #       selector: .spec.package
-      #       valuePrefix: ghcr.io/org/package:
+      #       valuePrefix: ghcr.io/org/package:v
       #     - filePath: config.yaml
       #       selector: .spec.package
       #       valuePrefix: v
@@ -195,7 +216,8 @@ jobs:
 
       # parse regexPatches yaml input - the key "patches" is required and is an array of objects
       # these objects contain the keys filePath, selector, and value
-      # for each object, run yq to update the file at filePath with the value at selector to the value
+      # for each object, sed uses the regex to update the file at filePath
+      # with ${valuePrefix}${versionNumber}
       # example:
       # regexPatches: |
       #   patches:
@@ -233,6 +255,15 @@ jobs:
 
           rm .tmp/regex-patches.yaml
 
+      # Tool based bumps
+      # These are optional and can be enabled via inputs
+
+      # Node / npm
+      - name: Node package version bump
+        if: inputs.node && steps.gate.outputs.continue == 'true'
+        run: npm version ${{ steps.next.outputs.version }} --git-tag-version false
+      
+      # Rust / Cargo
       - name: set cargo version (Optional)
         if: inputs.rust && steps.gate.outputs.continue == 'true'
         run: |
@@ -240,6 +271,8 @@ jobs:
           sed -i -E 's|^(version = ")[^"]+(")|\1${{ steps.next.outputs.version }}\2|' Cargo.toml
           cargo generate-lockfile
 
+      # END BUMPS
+      
       - name: Commit and push changes if they exist
         if: steps.gate.outputs.continue == 'true'
         run: |
