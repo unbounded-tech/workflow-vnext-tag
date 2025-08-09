@@ -108,10 +108,6 @@ jobs:
           # Add to PATH (yes, this github syntax preserves existing PATH and adds the new directory)
           echo "/home/runner/bin" >> $GITHUB_PATH
           echo "Created /home/runner/bin and added to PATH (existing PATH is preserved)"
-          mkdir -p /home/runner/ubi/bin
-          # Add to PATH (yes, this github syntax preserves existing PATH and adds the new directory)
-          echo "/home/runner/ubi/bin" >> $GITHUB_PATH
-          echo "Created /home/runner/ubi/bin and added to PATH (existing PATH is preserved)"
 
       - name: Install UBI
         shell: bash
@@ -127,6 +123,7 @@ jobs:
         run: |
           echo "Installing vnext..."
           ubi --project unbounded-tech/vnext --tag v1.8.0 --in /ubi/bin
+          echo "/home/runner/ubi/bin" >> $GITHUB_PATH
           vnext --version
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
