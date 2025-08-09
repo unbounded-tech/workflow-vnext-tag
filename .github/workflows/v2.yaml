@@ -122,9 +122,7 @@ jobs:
       - name: Install vnext
         run: |
           echo "Installing vnext..."
-          ubi --project unbounded-tech/vnext --tag v1.8.0 --in /ubi/bin
-          echo "/home/runner/ubi/bin" >> $GITHUB_PATH
-          vnext --version
+          ubi --project unbounded-tech/vnext --tag v1.8.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
