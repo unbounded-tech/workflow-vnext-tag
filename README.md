@@ -1,6 +1,6 @@
 # workflow-vnext-tag
 
-This repository offers a GitHub workflow which handles versioning, tagging, and changelogs in a language-agnostic way by depending on `git`, using `vnext`. It can be used along with some of our other workflows.
+This repository offers a universal approach to versioning, tagging, and changelogs in a language-agnostic way by using the `vnext` CLI tool. It can be adapted for various CI/CD systems including GitHub Actions and GitLab CI.
 
 ## Overview
 
@@ -10,9 +10,25 @@ This repository offers a GitHub workflow which handles versioning, tagging, and 
 - **Language-Agnostic Updates:**  
   Updates version references in various file types using flexible patching mechanisms (YQ and Regex).
 
-## Workflow Inputs
+- **Universal Approach:**  
+  By using the `vnext` CLI tool directly instead of platform-specific actions, this workflow can be adapted for any CI/CD system.
 
-The workflow accepts the following inputs:
+## Installing vnext
+
+The `vnext` CLI tool can be installed using `ubi`:
+
+```bash
+# Install ubi
+mkdir -p ~/.ubi/bin
+echo 'export PATH="$HOME/.ubi/bin:$PATH"' >> ~/.zshrc  # or your preferred shell profile
+
+# Install vnext with ubi
+ubi --project unbounded-tech/vnext --in ~/.ubi/bin
+```
+
+## GitHub Actions Workflow
+
+The GitHub Actions workflow accepts the following inputs:
 
 | Input | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
@@ -33,6 +49,19 @@ The workflow accepts the following inputs:
 | `GH_PAT` | No | GitHub Personal Access Token with repo,write:packages scopes when `usePAT` is true |
 
 > **Note:** This workflow creates a tag, which can trigger other workflows. The built-in `GITHUB_TOKEN` does not allow a workflow to trigger another workflow, so you need to use either a deploy key or a GitHub personal access token. We recommend using a deploy key per repo as they can be generated, forgotten, and rotated easily.
+
+## Adapting for Other CI/CD Systems
+
+The core functionality relies on the `vnext` CLI tool, which can be installed and used in any CI/CD system. The general steps are:
+
+1. Install `ubi` and use it to install `vnext`
+1. Use `vnext --current` to get the current version
+1. Use `vnext` to calculate the next version
+1. Make a gate, if current == next, exit, otherwise continue
+1. Generate a changelog with `vnext --changelog` if needed
+1. Update version references in files (using YQ, regex, or language-specific tools)
+1. Commit changes and create a new tag
+1. Push the tag to trigger release workflows
 
 ## Language-Agnostic Patch Options
 
@@ -129,9 +158,7 @@ This will:
 
 ## Example Usage
 
-Here are examples of how to use the workflow in different scenarios:
-
-### Basic Example with Language-Agnostic Patching
+### GitHub Actions Example
 
 ```yaml
 on:
@@ -145,7 +172,7 @@ jobs:
     
   version-and-tag:
     needs: quality
-    uses: unbounded-tech/workflow-vnext-tag/.github/workflows/workflow.yaml@main
+    uses: unbounded-tech/workflow-vnext-tag/.github/workflows/workflow-simplified.yaml@main
     secrets: inherit
     with:
       useDeployKey: true
@@ -159,7 +186,28 @@ jobs:
             valuePrefix: v
 ```
 
-### Full Rust Example
+### GitLab CI/CD Example
+
+```yaml
+# In your .gitlab-ci.yml
+include:
+  - project: 'unbounded-tech/workflow-vnext-tag'
+    file: '.gitlab-ci.yml'
+
+# Or define variables in your project settings
+variables:
+  CHANGELOG: "true"
+  YQ_PATCHES: |
+    patches:
+      - filePath: deploy/values.yaml
+        selector: .image.tag
+        valuePrefix: v
+      - filePath: deploy/Chart.yaml
+        selector: .version
+        valuePrefix: v
+```
+
+### Full Rust Example (GitHub Actions)
 
 To understand how the workflow fits into the larger picture, here is a full rust example.
 
@@ -187,7 +235,7 @@ jobs:
 
   version-and-tag:
     needs: quality
-    uses: unbounded-tech/workflow-vnext-tag/.github/workflows/workflow.yaml@main
+    uses: unbounded-tech/workflow-vnext-tag/.github/workflows/workflow-simplified.yaml@main
     secrets: inherit
     with:
       useDeployKey: true
