@@ -12,5 +12,18 @@
       "matchManagers": ["github-actions"],
       "semanticCommitType": "fix"
     }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/v2.yaml/"
+      ],
+      "matchStrings": [
+        "ubi --project (?<depName>.*) --tag (?<currentValue>.*?) --in ~/.ubi/bin"
+      ],
+      "datasourceTemplate": "github-releases",
+      "registryUrlTemplate": "https://github.com"
+    }
   ]
 }
