@@ -100,22 +100,22 @@ jobs:
         run: |
           git fetch --tags
 
-      - name: Install ubi
+      - name: Install UBI
+        shell: bash
         run: |
-          # Install ubi
-          mkdir -p ~/.ubi/bin
-          echo 'export PATH="$HOME/.ubi/bin:$PATH"' >> ~/.bashrc
-          
-          # Install vnext with ubi
-          echo "Installing ubi..."
-          curl --silent --location https://raw.githubusercontent.com/houseabsolute/ubi/master/bootstrap/bootstrap-ubi.sh | sh
-          ubi --version
+          curl --silent --location \
+              https://raw.githubusercontent.com/houseabsolute/ubi/master/bootstrap/bootstrap-ubi.sh |
+              sh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install vnext
         run: |
           echo "Installing vnext..."
-          ubi --project unbounded-tech/vnext --tag v1.8.0 --in /usr/local/bin
+          "$HOME/bin/ubi" --project unbounded-tech/vnext --tag v1.8.0 --in "$HOME/bin"
           vnext --version
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Get current version tag
         id: current
