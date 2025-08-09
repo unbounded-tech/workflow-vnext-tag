@@ -133,6 +133,7 @@ jobs:
         run: |
           CURRENT=$(vnext --current)
           echo "version=$CURRENT" >> $GITHUB_OUTPUT
+          echo "Current version: $CURRENT"
 
       - name: Show version calculation info (for humans)
         run: |
@@ -143,6 +144,7 @@ jobs:
         run: |
           NEXT_VERSION=$(vnext)
           echo "version=$NEXT_VERSION" >> $GITHUB_OUTPUT
+          echo "Next version: $NEXT_VERSION"
 
       - name: Gate
         id: gate
