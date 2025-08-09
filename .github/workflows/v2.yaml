@@ -123,6 +123,11 @@ jobs:
         run: |
           echo "Installing vnext..."
           ubi --project unbounded-tech/vnext --tag v1.8.0
+          ls -la
+          ls -la /bin
+          pwd
+          echo "$(pwd)/bin" >> $GITHUB_PATH
+          echo "vnext installed successfully"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
