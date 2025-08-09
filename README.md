@@ -55,12 +55,13 @@ The GitHub Actions workflow accepts the following inputs:
 The core functionality relies on the `vnext` CLI tool, which can be installed and used in any CI/CD system. The general steps are:
 
 1. Install `ubi` and use it to install `vnext`
-2. Fetch git tags to get the current version
-3. Use `vnext` to calculate the next version
-4. Generate a changelog with `vnext --changelog` if needed
-5. Update version references in files (using YQ, regex, or language-specific tools)
-6. Commit changes and create a new tag
-7. Push the tag to trigger release workflows
+1. Use `vnext --current` to get the current version
+1. Use `vnext` to calculate the next version
+1. Make a gate, if current == next, exit, otherwise continue
+1. Generate a changelog with `vnext --changelog` if needed
+1. Update version references in files (using YQ, regex, or language-specific tools)
+1. Commit changes and create a new tag
+1. Push the tag to trigger release workflows
 
 ## Language-Agnostic Patch Options
 
