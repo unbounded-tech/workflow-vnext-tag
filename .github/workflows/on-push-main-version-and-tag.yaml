@@ -12,7 +12,7 @@ jobs:
   # This uses commit logs and tags from git to determine the next version number and create a tag for the release
   # Some commits such are chore: will not trigger a version bump and tag! This is by design.
   version-and-tag:
-    name: Version and Tag
+    name: Version, Bump, Changelog, and Tag
     uses: unbounded-tech/workflow-vnext-tag/.github/workflows/workflow.yaml@main
     secrets: inherit
     with:
