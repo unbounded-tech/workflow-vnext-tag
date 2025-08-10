@@ -49,7 +49,7 @@ jobs:
     steps:
       - name: Checkout repository
         if: inputs.useDeployKey
-        uses: actions.checkout@v4
+        uses: actions/checkout@v4
 
       - name: Create bin directory for ubi
         if: inputs.useDeployKey
@@ -68,8 +68,6 @@ jobs:
               sh
           ubi --version
           echo "$(pwd)/bin" >> $GITHUB_PATH
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install vnext
         if: inputs.useDeployKey
@@ -77,13 +75,9 @@ jobs:
           echo "Installing vnext..."
           ubi --project unbounded-tech/vnext --tag v1.8.0
           vnext --version
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create Deploy Key and Secret with vnext
         if: inputs.useDeployKey
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Creating deploy key '${{ github.event.repository.name }}' and secret 'DEPLOY_KEY'"
           vnext generate-deploy-key --owner "${{ github.repository_owner }}" --name "${{ github.event.repository.name }}"
@@ -102,20 +96,20 @@ jobs:
 
       - name: Checkout
         if: ${{ !inputs.useDeployKey && !inputs.usePAT }}
-        uses: actions.checkout@v4.2.2
+        uses: actions/checkout@v4.2.2
         with:
           fetch-depth: 0
 
       - name: Checkout w/ Deploy Key
         if: inputs.useDeployKey
-        uses: actions.checkout@v4.2.2
+        uses: actions/checkout@v4.2.2
         with:
           fetch-depth: 0
           ssh-key: ${{ secrets.DEPLOY_KEY }}
 
       - name: Checkout w/ PAT
         if: inputs.usePAT
-        uses: actions.checkout@v4.2.2
+        uses: actions/checkout@v4.2.2
         with:
           fetch-depth: 0
           token: ${{ secrets.GH_PAT }}
@@ -141,16 +135,12 @@ jobs:
               sh
           ubi --version
           echo "$(pwd)/bin" >> $GITHUB_PATH
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install vnext
         run: |
           echo "Installing vnext..."
           ubi --project unbounded-tech/vnext --tag v1.8.0
           vnext --version
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Get current version tag
         id: current
