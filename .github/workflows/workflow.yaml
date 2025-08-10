@@ -78,6 +78,8 @@ jobs:
 
       - name: Create Deploy Key and Secret with vnext
         if: inputs.useDeployKey
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           echo "Creating deploy key '${{ github.event.repository.name }}' and secret 'DEPLOY_KEY'"
           vnext generate-deploy-key --owner "${{ github.repository_owner }}" --name "${{ github.event.repository.name }}"
