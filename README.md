@@ -1,6 +1,6 @@
 # workflow-vnext-tag
 
-This repository offers a universal approach to versioning, tagging, and changelogs in a language-agnostic way by using the `vnext` CLI tool.
+This repository offers a shared Github Actions Workflow that implements a universal approach to versioning, tagging, and changelogs in a language-agnostic way by using the `vnext` CLI tool.
 
 ## Overview
 
