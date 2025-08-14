@@ -1,6 +1,6 @@
 # workflow-vnext-tag
 
-This repository offers a universal approach to versioning, tagging, and changelogs in a language-agnostic way by using the `vnext` CLI tool. It can be adapted for various CI/CD systems including GitHub Actions, GitLab CI, Tekton, ArgoCD Workflows, and more.
+This repository offers a universal approach to versioning, tagging, and changelogs in a language-agnostic way by using the `vnext` CLI tool.
 
 ## Overview
 
