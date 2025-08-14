@@ -1,6 +1,6 @@
 # workflow-vnext-tag
 
-This repository offers a universal approach to versioning, tagging, and changelogs in a language-agnostic way by using the `vnext` CLI tool. It can be adapted for various CI/CD systems including GitHub Actions and GitLab CI.
+This repository offers a universal approach to versioning, tagging, and changelogs in a language-agnostic way by using the `vnext` CLI tool. It can be adapted for various CI/CD systems including GitHub Actions, GitLab CI, Tekton, ArgoCD Workflows, and more.
 
 ## Overview
 
@@ -184,27 +184,6 @@ jobs:
           - filePath: deploy/Chart.yaml
             selector: .version
             valuePrefix: v
-```
-
-### GitLab CI/CD Example
-
-```yaml
-# In your .gitlab-ci.yml
-include:
-  - project: 'unbounded-tech/workflow-vnext-tag'
-    file: '.gitlab-ci.yml'
-
-# Or define variables in your project settings
-variables:
-  CHANGELOG: "true"
-  YQ_PATCHES: |
-    patches:
-      - filePath: deploy/values.yaml
-        selector: .image.tag
-        valuePrefix: v
-      - filePath: deploy/Chart.yaml
-        selector: .version
-        valuePrefix: v
 ```
 
 ### Full Rust Example (GitHub Actions)
