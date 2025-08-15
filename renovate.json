@@ -10,11 +10,11 @@
   "customManagers": [
     {
       "customType": "regex",
-      "managerFilePatterns": [
-        "**/*.{yaml,yml}"
+      "fileMatch": [
+        "\\.yaml$"
       ],
       "matchStrings": [
-        "ubi --project (?<depName>.*) --tag (?<currentValue>.*?)"
+        "\\s*ubi --project (?<depName>.*) --tag (?<currentValue>.*?)"
       ],
       "datasourceTemplate": "github-releases",
       "registryUrlTemplate": "https://github.com"
