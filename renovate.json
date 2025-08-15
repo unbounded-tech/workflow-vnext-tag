@@ -6,7 +6,8 @@
   "packageRules": [
     {
       "matchManagers": [
-        "github-actions"
+        "github-actions",
+        "github-releases"
       ],
       "semanticCommitType": "fix"
     }
@@ -21,8 +22,7 @@
         "\\s*ubi --project (?<depName>.*) --tag (?<currentValue>.*?)\\n"
       ],
       "datasourceTemplate": "github-releases",
-      "registryUrlTemplate": "https://github.com",
-      "semanticCommitType": "feat"
+      "registryUrlTemplate": "https://github.com"
     }
   ]
 }
