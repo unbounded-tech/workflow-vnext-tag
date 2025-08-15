@@ -21,7 +21,8 @@
         "\\s*ubi --project (?<depName>.*) --tag (?<currentValue>.*?)\\n"
       ],
       "datasourceTemplate": "github-releases",
-      "registryUrlTemplate": "https://github.com"
+      "registryUrlTemplate": "https://github.com",
+      "semanticCommitType": "feat"
     }
   ]
 }
