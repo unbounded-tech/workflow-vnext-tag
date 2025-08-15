@@ -17,7 +17,7 @@
     {
       "customType": "regex",
       "managerFilePatterns": [
-        "/workflow.yaml/"
+        "**/*.{yaml,yml}"
       ],
       "matchStrings": [
         "ubi --project (?<depName>.*) --tag (?<currentValue>.*?)"
