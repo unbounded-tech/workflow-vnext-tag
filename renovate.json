@@ -1,17 +1,21 @@
 {
-  "extends": ["config:recommended"],
+  "extends": [
+    "config:recommended"
+  ],
   "semanticCommits": "enabled",
   "packageRules": [
     {
-      "matchManagers": ["github-actions"],
+      "matchManagers": [
+        "github-actions"
+      ],
       "semanticCommitType": "fix"
     }
   ],
   "customManagers": [
     {
       "customType": "regex",
-      "fileMatch": [
-        "\\.yaml$"
+      "managerFilePatterns": [
+        "/\\.yaml$/"
       ],
       "matchStrings": [
         "\\s*ubi --project (?<depName>.*) --tag (?<currentValue>.*?)"
