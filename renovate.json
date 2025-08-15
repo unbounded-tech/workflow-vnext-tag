@@ -18,7 +18,7 @@
         "/\\.yaml$/"
       ],
       "matchStrings": [
-        "\\s*ubi --project (?<depName>.*) --tag (?<currentValue>.*?)"
+        "\\s*ubi --project (?<depName>.*) --tag (?<currentValue>.*?)\\n"
       ],
       "datasourceTemplate": "github-releases",
       "registryUrlTemplate": "https://github.com"
