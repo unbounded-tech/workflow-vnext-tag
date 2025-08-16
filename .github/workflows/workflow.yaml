@@ -116,14 +116,14 @@ jobs:
               https://raw.githubusercontent.com/houseabsolute/ubi/master/bootstrap/bootstrap-ubi.sh |
               sh
           ubi --version
-          echo "$(pwd)/bin" >> $GITHUB_PATH
+          echo "$(pwd)/.vnext/bin" >> $GITHUB_PATH
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install vnext
         run: |
           echo "Installing vnext..."
-          ubi --project unbounded-tech/vnext --tag v1.13.0
+          ubi --project unbounded-tech/vnext --tag v1.13.0 --in "$(pwd)/.vnext/bin"
           vnext --version
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -272,7 +272,13 @@ jobs:
           cargo generate-lockfile
 
       # END BUMPS
-      
+
+      - name: cleanup directory
+        run: |
+          # Don't want .vnext to be included in the commit
+          echo "Cleaning up .vnext directory..."
+          rm -rf .vnext/
+
       - name: Commit and push changes if they exist
         if: steps.gate.outputs.continue == 'true'
         run: |
