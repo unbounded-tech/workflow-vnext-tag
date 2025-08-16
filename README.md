@@ -10,9 +10,6 @@ This repository offers a shared Github Actions Workflow that implements a univer
 - **Language-Agnostic Updates:**  
   Updates version references in various file types using flexible patching mechanisms (YQ and Regex).
 
-- **Universal Approach:**  
-  By using the `vnext` CLI tool directly instead of platform-specific actions, this workflow can be adapted for any CI/CD system.
-
 ## Installing vnext
 
 The `vnext` CLI tool can be installed using `ubi`:
