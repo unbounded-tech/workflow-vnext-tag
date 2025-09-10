@@ -10,19 +10,6 @@ This repository offers a shared Github Actions Workflow that implements a univer
 - **Language-Agnostic Updates:**  
   Updates version references in various file types using flexible patching mechanisms (YQ and Regex).
 
-## Installing vnext
-
-The `vnext` CLI tool can be installed using `ubi`:
-
-```bash
-# Install ubi
-mkdir -p ~/.ubi/bin
-echo 'export PATH="$HOME/.ubi/bin:$PATH"' >> ~/.zshrc  # or your preferred shell profile
-
-# Install vnext with ubi
-ubi --project unbounded-tech/vnext --in ~/.ubi/bin
-```
-
 ## GitHub Actions Workflow
 
 The GitHub Actions workflow accepts the following inputs:
