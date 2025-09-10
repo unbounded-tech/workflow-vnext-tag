@@ -156,7 +156,7 @@ jobs:
     
   version-and-tag:
     needs: quality
-    uses: unbounded-tech/workflow-vnext-tag/.github/workflows/workflow-simplified.yaml@main
+    uses: unbounded-tech/workflow-vnext-tag/.github/workflows/workflow.yaml@main
     secrets: inherit
     with:
       useDeployKey: true
@@ -172,7 +172,7 @@ jobs:
 
 ### Full Rust Example (GitHub Actions)
 
-To understand how the workflow fits into the larger picture, here is a full rust example.
+To understand how the workflow fits into the larger picture, here is a full example of release a rust bin.
 
 First, set up a deploy key for the repo - you can use the vnext CLI to do so:
 
@@ -191,14 +191,14 @@ on:
 
 jobs:
   quality:
-    uses: unbounded-tech/workflow-rust-quality/.github/workflows/workflow.yaml@main
+    uses: unbounded-tech/workflows-rust/.github/workflows/quality.yaml@main
     with:
       cargo_test_args: '--verbose'
       lint: true
 
   version-and-tag:
     needs: quality
-    uses: unbounded-tech/workflow-vnext-tag/.github/workflows/workflow-simplified.yaml@main
+    uses: unbounded-tech/workflow-vnext-tag/.github/workflows/workflow.yaml@main
     secrets: inherit
     with:
       useDeployKey: true
@@ -220,7 +220,7 @@ on:
 
 jobs:
   publish:
-    uses: unbounded-tech/workflow-rust-release/.github/workflows/workflow.yaml@main
+    uses: unbounded-tech/workflows-rust/.github/workflows/release.yaml@main
     with:
       executable_name: my-app
       platforms: '[{"os-name": "Linux-x86_64", "runs-on": "ubuntu-24.04", "target": "x86_64-unknown-linux-musl"}]'
