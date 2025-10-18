@@ -86,7 +86,7 @@ jobs:
         if: inputs.useDeployKey
         run: |
           if [ -z "${{ secrets.DEPLOY_KEY }}" ]; then
-            echo "::error::Error: useDeployKey is true, but secrets.DEPLOY_KEY is missing"
+            echo "::error::Error: useDeployKey is true, but secrets.DEPLOY_KEY is missing. You can generate a deploy key and secret with `vnext generate-deploy-key`. Make sure you are passing the secret to the job explicitly or with `secrets: inherit`."
             exit 1
           fi
 
@@ -101,7 +101,7 @@ jobs:
         if: inputs.usePAT
         run: |
           if [ -z "${{ secrets.GH_PAT }}" ]; then
-            echo "::error::Error: usePAT is true, but secrets.GH_PAT is missing"
+            echo "::error::Error: usePAT is true, but secrets.GH_PAT is missing. Make sure you are passing the secret to the job explicitly."
             exit 1
           fi
 
