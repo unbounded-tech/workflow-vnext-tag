@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   call-release-workflow:
-    uses: unbounded-tech/workflow-simple-release/.github/workflows/workflow.yaml@v2.0.1
+    uses: unbounded-tech/workflow-simple-release/.github/workflows/workflow.yaml@v2.0.2
     with:
       tag: ${{ github.ref_name }}
       name: ${{ github.ref_name }}
