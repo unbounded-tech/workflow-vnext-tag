@@ -77,7 +77,7 @@ jobs:
 
       - name: Checkout
         if: ${{ !inputs.useDeployKey && !inputs.usePAT }}
-        uses: actions/checkout@v7.0.0
+        uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
 
@@ -91,7 +91,7 @@ jobs:
 
       - name: Checkout w/ Deploy Key
         if: inputs.useDeployKey
-        uses: actions/checkout@v7.0.0
+        uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
           ssh-key: ${{ secrets.DEPLOY_KEY }}
@@ -106,7 +106,7 @@ jobs:
 
       - name: Checkout w/ PAT
         if: inputs.usePAT
-        uses: actions/checkout@v7.0.0
+        uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
           token: ${{ secrets.GH_PAT }}
