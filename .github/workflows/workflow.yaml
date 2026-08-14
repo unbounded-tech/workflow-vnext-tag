@@ -59,7 +59,7 @@ on:
         required: false
 
       GH_PAT:
-        description: 'GitHub Personal Access Token (PAT) with repo,write:packages scopes'
+        description: 'GitHub Personal Access Token (PAT) with repository write access for git operations'
         required: false
 
 jobs:
@@ -69,7 +69,6 @@ jobs:
     runs-on: ${{ inputs.runs-on }}
 
     permissions:
-      packages: write
       contents: write
 
     steps:

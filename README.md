@@ -30,7 +30,7 @@ The GitHub Actions workflow accepts the following inputs:
 | Secret | Required | Description |
 |--------|----------|-------------|
 | `DEPLOY_KEY` | No | SSH deploy key for git operations when `useDeployKey` is true |
-| `GH_PAT` | No | GitHub Personal Access Token with repo,write:packages scopes when `usePAT` is true |
+| `GH_PAT` | No | GitHub Personal Access Token with repository write access for git operations when `usePAT` is true |
 
 > **Note:** This workflow creates a tag, which can trigger other workflows. The built-in `GITHUB_TOKEN` does not allow a workflow to trigger another workflow, so you need to use either a deploy key or a GitHub personal access token. We recommend using a deploy key per repo as they can be generated, forgotten, and rotated easily.
 
