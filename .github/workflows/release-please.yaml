@@ -1,0 +1,119 @@
+name: Release Please
+
+on:
+  workflow_call:
+    inputs:
+      auth_mode:
+        description: GitHub authentication mode (app or pat)
+        type: string
+        default: app
+      config_file:
+        description: Release Please configuration in the caller repository
+        type: string
+        default: release-please-config.json
+      manifest_file:
+        description: Release Please version manifest in the caller repository
+        type: string
+        default: .release-please-manifest.json
+      target_branch:
+        description: Branch whose release PR and tags Release Please owns
+        type: string
+        default: main
+    secrets:
+      GH_APP_ID:
+        required: false
+      GH_APP_KEY:
+        required: false
+      GH_PAT:
+        required: false
+    outputs:
+      releases_created:
+        description: Whether any package release was created
+        value: ${{ jobs.release-please.outputs.releases_created }}
+      release_created:
+        description: Whether the root package release was created
+        value: ${{ jobs.release-please.outputs.release_created }}
+      tag_name:
+        description: Root package release tag
+        value: ${{ jobs.release-please.outputs.tag_name }}
+      version:
+        description: Root package release version without the tag prefix
+        value: ${{ jobs.release-please.outputs.version }}
+      sha:
+        description: Root package released commit
+        value: ${{ jobs.release-please.outputs.sha }}
+      paths_released:
+        description: JSON array of released package paths
+        value: ${{ jobs.release-please.outputs.paths_released }}
+      prs:
+        description: JSON array of release PRs created or updated
+        value: ${{ jobs.release-please.outputs.prs }}
+
+permissions: {}
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    concurrency:
+      group: release-please-${{ github.repository }}-${{ inputs.target_branch }}
+      cancel-in-progress: false
+    outputs:
+      releases_created: ${{ steps.release.outputs.releases_created }}
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+      version: ${{ steps.release.outputs.version }}
+      sha: ${{ steps.release.outputs.sha }}
+      paths_released: ${{ steps.release.outputs.paths_released }}
+      prs: ${{ steps.release.outputs.prs }}
+    steps:
+      - name: Validate release authentication
+        shell: bash
+        env:
+          AUTH_MODE: ${{ inputs.auth_mode }}
+          GH_APP_ID: ${{ secrets.GH_APP_ID }}
+          GH_APP_KEY: ${{ secrets.GH_APP_KEY }}
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          set -euo pipefail
+          case "$AUTH_MODE" in
+            app)
+              if [[ -z "$GH_APP_ID" || -z "$GH_APP_KEY" ]]; then
+                echo "::error::app authentication requires GH_APP_ID and GH_APP_KEY"
+                exit 1
+              fi
+              ;;
+            pat)
+              if [[ -z "$GH_PAT" ]]; then
+                echo "::error::pat authentication requires GH_PAT"
+                exit 1
+              fi
+              ;;
+            *)
+              echo "::error::auth_mode must be app or pat"
+              exit 1
+              ;;
+          esac
+
+      - name: Create release token
+        if: inputs.auth_mode == 'app'
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ secrets.GH_APP_ID }}
+          private-key: ${{ secrets.GH_APP_KEY }}
+          permission-contents: write
+          permission-issues: write
+          permission-pull-requests: write
+
+      - name: Release Please
+        id: release
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          token: ${{ inputs.auth_mode == 'app' && steps.app-token.outputs.token || secrets.GH_PAT }}
+          config-file: ${{ inputs.config_file }}
+          manifest-file: ${{ inputs.manifest_file }}
+          target-branch: ${{ inputs.target_branch }}

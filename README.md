@@ -10,6 +10,117 @@ This repository offers a shared Github Actions Workflow that implements a univer
 - **Language-Agnostic Updates:**  
   Updates version references in various file types using flexible patching mechanisms (YQ and Regex).
 
+## Release Please alternative
+
+Repositories using release PRs can call
+`.github/workflows/release-please.yaml` instead of `workflow.yaml`. Release
+Please owns version calculation, the release PR, changelog, GitHub release,
+and tags. The existing vnext workflow retains its current behavior for its
+consumers. Select one release authority per target branch.
+
+```yaml
+on:
+  push:
+    branches: [main]
+
+permissions: {}
+
+jobs:
+  release-please:
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    # Pin this reusable workflow to a reviewed full commit SHA.
+    uses: unbounded-tech/workflow-vnext-tag/.github/workflows/release-please.yaml@<commit-sha>
+    secrets:
+      GH_APP_ID: ${{ secrets.GH_APP_ID }}
+      GH_APP_KEY: ${{ secrets.GH_APP_KEY }}
+```
+
+The default `auth_mode: app` creates a token scoped to the caller repository.
+Install the GitHub App there with Contents, Issues, and Pull requests write
+permissions. For a PAT, set `auth_mode: pat` and pass `GH_PAT` instead. Both
+allow generated release PRs and tags to trigger downstream workflows. The
+workflow intentionally requires an App or PAT rather than falling back to
+`GITHUB_TOKEN`, whose generated events ordinarily do not start those workflows.
+Pass secrets explicitly; no deploy credentials are needed.
+
+Optional string inputs `config_file`, `manifest_file`, and `target_branch`
+default to `release-please-config.json`, `.release-please-manifest.json`, and
+`main`. Configuration is read from the caller repository on the target branch.
+Outputs are `releases_created`, `paths_released`, and `prs`, plus root-package
+`release_created`, `tag_name`, `version`, and `sha`. Boolean outputs are strings;
+compare them with `'true'`. `prs` is empty when no release PR was created or
+updated. Root-package outputs apply to the `.` package; multi-package consumers
+should use the released paths or their own tag-triggered publishing workflows.
+
+### Additional version files in the release PR
+
+Use native Release Please `extra-files` in the caller's configuration. File
+updates receive the version Release Please chose and land in its release PR
+before merge and tagging. Language-specific strategies already update their
+package files; for example, `rust` updates Cargo.toml and Cargo.lock without
+regenerating dependency resolutions.
+
+```json
+{
+  "packages": {
+    ".": {
+      "release-type": "rust",
+      "include-component-in-tag": false,
+      "extra-files": [
+        {
+          "type": "yaml",
+          "path": "deploy/Chart.yaml",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "yaml",
+          "path": "deploy/Chart.yaml",
+          "jsonpath": "$.appVersion"
+        },
+        {
+          "type": "json",
+          "path": "config.json",
+          "jsonpath": "$.metadata.version"
+        },
+        {
+          "type": "generic",
+          "path": "deploy/values.yaml"
+        }
+      ]
+    }
+  }
+}
+```
+
+For arbitrary text and prefixed values, annotate the version to replace:
+
+```yaml
+image:
+  tag: v0.1.0 # x-release-please-version
+package: ghcr.io/org/package:v0.1.0 # x-release-please-version
+```
+
+The generic updater preserves the prefix and surrounding text. It requires an
+existing version on the annotated line; `latest` and `main` are not version
+placeholders. Annotate only release version lines, leaving SHA/PR preview tags
+and dependency versions unmarked. Structured YAML updaters replace selected
+string fields with the bare version and may reformat YAML/remove comments;
+use generic annotations when formatting or prefixes must be preserved.
+
+JSONPath-targeted TOML and XPath-targeted XML updates are also supported. See
+[Release Please file customization](https://github.com/googleapis/release-please/blob/main/docs/customizing.md)
+for the complete format. The vnext `yqPatches`, `regexPatches`, `node`, and
+`rust` inputs belong to `workflow.yaml`; the Release Please entry point uses
+native manifest configuration. Expressions that cannot be represented by
+native updaters need a Release Please updater/plugin extension rather than a
+second version calculation, commit/tag workflow, or post-tag source patch.
+
+Deploy workflows can continue independently. This reusable workflow has no
+Fly, environment-repository promotion, or deployment steps.
+
 ## GitHub Actions Workflow
 
 The GitHub Actions workflow accepts the following inputs:
