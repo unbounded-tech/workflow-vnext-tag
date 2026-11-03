@@ -10,6 +10,19 @@
         "custom.regex"
       ],
       "semanticCommitType": "fix"
+    },
+    {
+      "matchManagers": [
+        "github-actions"
+      ],
+      "pinDigests": true
+    },
+    {
+      "matchPackageNames": [
+        "houseabsolute/ubi"
+      ],
+      "groupName": "ubi bootstrap",
+      "groupSlug": "ubi-bootstrap"
     }
   ],
   "customManagers": [
@@ -23,6 +36,20 @@
       ],
       "datasourceTemplate": "github-releases",
       "registryUrlTemplate": "https://github.com"
+    },
+    {
+      "customType": "regex",
+      "description": "Update the ubi bootstrap source commit and installed release together",
+      "managerFilePatterns": [
+        "/^\\.github/workflows/workflow\\.yaml$/"
+      ],
+      "matchStrings": [
+        "UBI_BOOTSTRAP_REVISION: (?<currentDigest>[a-f0-9]{40}) # (?<currentValue>v[0-9]+\\.[0-9]+\\.[0-9]+)",
+        "\\n[ \\t]+TAG: (?<currentValue>v[0-9]+\\.[0-9]+\\.[0-9]+)"
+      ],
+      "depNameTemplate": "houseabsolute/ubi",
+      "datasourceTemplate": "github-tags",
+      "versioningTemplate": "semver"
     }
   ]
 }
