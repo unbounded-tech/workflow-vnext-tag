@@ -12,6 +12,12 @@ This repository offers a shared Github Actions Workflow that implements a univer
 
 ## GitHub Actions Workflow
 
+External actions and reusable workflows are pinned to full commit SHAs, with
+version comments retained for Renovate updates. The ubi bootstrap script also
+comes from a release commit rather than a moving branch. Its installed release
+is fixed by `TAG`; Renovate groups that version with the bootstrap source pin.
+Pin this reusable workflow to a reviewed commit SHA in consuming repositories.
+
 The GitHub Actions workflow accepts the following inputs:
 
 | Input | Type | Required | Default | Description |

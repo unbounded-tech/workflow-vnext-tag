@@ -73,11 +73,11 @@ jobs:
 
     steps:
 
-      - uses: runs-on/action@v2.3.0
+      - uses: runs-on/action@46910bf61b41721b0579f237e186afb35477007a # v2.3.0
 
       - name: Checkout
         if: ${{ !inputs.useDeployKey && !inputs.usePAT }}
-        uses: actions/checkout@v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
@@ -91,7 +91,7 @@ jobs:
 
       - name: Checkout w/ Deploy Key
         if: inputs.useDeployKey
-        uses: actions/checkout@v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           ssh-key: ${{ secrets.DEPLOY_KEY }}
@@ -106,7 +106,7 @@ jobs:
 
       - name: Checkout w/ PAT
         if: inputs.usePAT
-        uses: actions/checkout@v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           token: ${{ secrets.GH_PAT }}
@@ -121,18 +121,20 @@ jobs:
           # Create the directory if it doesn't exist
           mkdir -p /home/runner/bin
           # Add to PATH (yes, this github syntax preserves existing PATH and adds the new directory)
-          echo "/home/runner/bin" >> $GITHUB_PATH
+          echo "/home/runner/bin" >> "$GITHUB_PATH"
           echo "Created /home/runner/bin and added to PATH (existing PATH is preserved)"
 
       - name: Install and configure ubi
         shell: bash
         run: |
-          curl --silent --location \
-              https://raw.githubusercontent.com/houseabsolute/ubi/master/bootstrap/bootstrap-ubi.sh |
+          curl --fail --silent --show-error --location \
+              "https://raw.githubusercontent.com/houseabsolute/ubi/${UBI_BOOTSTRAP_REVISION}/bootstrap/bootstrap-ubi.sh" |
               sh
           ubi --version
-          echo "$(pwd)/.vnext/bin" >> $GITHUB_PATH
+          echo "$(pwd)/.vnext/bin" >> "$GITHUB_PATH"
         env:
+          UBI_BOOTSTRAP_REVISION: 88c2ce36af284e675921dc00f9aafcbd49129883 # v0.13.0
+          TAG: v0.13.0
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install vnext
